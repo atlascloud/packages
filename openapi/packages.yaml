@@ -12,10 +12,10 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-    servers:
-      - url: https://packages.atlascloud.xyz/api
     # servers:
-      # - url: http://localhost:8888/api
+    # - url: https://packages.atlascloud.xyz/api
+    # servers:
+    # - url: http://localhost:8888/api
 paths:
   /distributions:
     get:

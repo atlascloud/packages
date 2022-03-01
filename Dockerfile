@@ -17,7 +17,7 @@ LABEL maintainer="iggy@atlascloud.xyz"
 LABEL org.opencontainers.image.source=https://github.com/atlascloud/packages
 EXPOSE 8888
 
-RUN ["apk", "add", "abuild"]
+RUN ["apk", "add", "--nocache", "abuild"]
 
 COPY ./api /app/
 
