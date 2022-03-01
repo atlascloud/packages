@@ -241,6 +241,84 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string)
 	return ctx.JSON(http.StatusOK, pkgs)
 }
 
+// generateAPKIndex - (re)generate the APKINDEX file
+// this runs in the background because it can take quite a while
+// regenerate the APKINDEX
+// TODO make sure we don't run this unnecessarily
+func generateAPKIndex(pkgDir string) {
+	// generate the index and sign it all in the background so the user isn't waiting around
+	// for a possibly long running task
+	apks, err := filepath.Glob(filepath.Join(pkgDir, "*.apk"))
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to glob apks")
+	}
+	// c := exec.Command("/sbin/apk", "index", "-o", "APKINDEX.new.tar.gz", "-x", "APKINDEX.tar.gz", "-d", "atlascloud main edge")
+	args := []string{"index", "--no-warnings", "-o", "APKINDEX.new.tar.gz", "-d", "atlascloud main edge"}
+	args = append(args, apks...)
+	c := exec.Command("/sbin/apk", args...)
+
+	c.Dir = pkgDir
+	stderr, err := c.StderrPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("error setting up stderr for apk index command")
+	}
+	stdout, err := c.StdoutPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("error setting up stdout for apk index command")
+	}
+
+	err = c.Start()
+	if err != nil {
+		log.Error().Str("command", c.String()).Err(err).Msg("failed to run apk index")
+		return
+	}
+
+	se, err := ioutil.ReadAll(stderr)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read stderr")
+	}
+	log.Warn().Bytes("stderr", se).Msg("apk index stderr")
+	so, err := ioutil.ReadAll(stdout)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read stdout")
+	}
+	log.Warn().Bytes("stdout", so).Msg("apk index stdout")
+
+	keyFile := os.Getenv("KEY_FILE")
+	c = exec.Command("/usr/bin/abuild-sign", "-k", keyFile, "APKINDEX.new.tar.gz")
+	c.Dir = pkgDir
+	stderr, err = c.StderrPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("error setting up stderr for abuild-sign command")
+	}
+	stdout, err = c.StdoutPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("error setting up stdout for abuild-sign command")
+	}
+
+	err = c.Start()
+	if err != nil {
+		log.Error().Str("command", c.String()).Err(err).Msg("failed to run abuild-sign")
+		return
+	}
+	se, err = ioutil.ReadAll(stderr)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read stderr")
+	}
+	log.Warn().Bytes("stderr", se).Msg("abuild-sign stderr")
+	so, err = ioutil.ReadAll(stdout)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read stdout")
+	}
+	log.Warn().Bytes("stdout", so).Msg("abuild-sign stdout")
+
+	err = os.Rename(filepath.Join(pkgDir, "APKINDEX.new.tar.gz"), filepath.Join(pkgDir, "APKINDEX.tar.gz"))
+	if err != nil {
+		log.Error().Err(err).Msg("failed to rename apkindex file")
+	}
+
+}
+
 // CreatePackage - Create a package in a repo and regenerate the index
 func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) error {
 	arch := filepath.Clean(ctx.FormValue("architecture"))
@@ -276,80 +354,7 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) erro
 		log.Warn().Err(err).Msg("failed to copy file from src to dst")
 	}
 
-	// regenerate the APKINDEX
-	// TODO make sure we don't run this unnecessarily
-	go func() {
-		// generate the index and sign it all in the background so the user isn't waiting around
-		// for a possibly long running task
-		apks, err := filepath.Glob(filepath.Join(pkgDir, "*.apk"))
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to glob apks")
-		}
-		// c := exec.Command("/sbin/apk", "index", "-o", "APKINDEX.new.tar.gz", "-x", "APKINDEX.tar.gz", "-d", "atlascloud main edge")
-		args := []string{"index", "--no-warnings", "-o", "APKINDEX.new.tar.gz", "-d", "atlascloud main edge"}
-		args = append(args, apks...)
-		c := exec.Command("/sbin/apk", args...)
-
-		c.Dir = pkgDir
-		stderr, err := c.StderrPipe()
-		if err != nil {
-			log.Error().Err(err).Msg("error setting up stderr for apk index command")
-		}
-		stdout, err := c.StdoutPipe()
-		if err != nil {
-			log.Error().Err(err).Msg("error setting up stdout for apk index command")
-		}
-
-		err = c.Start()
-		if err != nil {
-			log.Error().Str("command", c.String()).Err(err).Msg("failed to run apk index")
-			return
-		}
-
-		se, err := ioutil.ReadAll(stderr)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to read stderr")
-		}
-		log.Warn().Bytes("stderr", se).Msg("apk index stderr")
-		so, err := ioutil.ReadAll(stdout)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to read stdout")
-		}
-		log.Warn().Bytes("stdout", so).Msg("apk index stdout")
-
-		keyFile := os.Getenv("KEY_FILE")
-		c = exec.Command("/usr/bin/abuild-sign", "-k", keyFile, "APKINDEX.new.tar.gz")
-		c.Dir = pkgDir
-		stderr, err = c.StderrPipe()
-		if err != nil {
-			log.Error().Err(err).Msg("error setting up stderr for abuild-sign command")
-		}
-		stdout, err = c.StdoutPipe()
-		if err != nil {
-			log.Error().Err(err).Msg("error setting up stdout for abuild-sign command")
-		}
-
-		err = c.Start()
-		if err != nil {
-			log.Error().Str("command", c.String()).Err(err).Msg("failed to run abuild-sign")
-			return
-		}
-		se, err = ioutil.ReadAll(stderr)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to read stderr")
-		}
-		log.Warn().Bytes("stderr", se).Msg("abuild-sign stderr")
-		so, err = ioutil.ReadAll(stdout)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to read stdout")
-		}
-		log.Warn().Bytes("stdout", so).Msg("abuild-sign stdout")
-
-		err = os.Rename(filepath.Join(pkgDir, "APKINDEX.new.tar.gz"), filepath.Join(pkgDir, "APKINDEX.tar.gz"))
-		if err != nil {
-			log.Error().Err(err).Msg("failed to rename apkindex file")
-		}
-	}()
+	go generateAPKIndex(pkgDir)
 
 	name, version, release := parseAPKFilename(file.Filename)
 
