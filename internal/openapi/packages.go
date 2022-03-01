@@ -55,7 +55,7 @@ func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 	repos, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine"))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to readdir org")
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 	}
 
 	for _, r := range repos {
@@ -64,7 +64,7 @@ func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 			nents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", r.Name()))
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to readdir r.Name")
-				sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+				_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 			}
 			for _, ne := range nents {
 				// fmt.Println(e, ne)
@@ -121,7 +121,7 @@ func (p *PkgRepoAPI) FindRepoByName(ctx echo.Context, org, repo string) error {
 	repos, err := filepath.Glob(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", "*", repo))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to glob repo")
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 	}
 	for _, ne := range repos {
 		// TODO seems like there should be a more foolproof way, but this works for now
@@ -165,7 +165,7 @@ func (p *PkgRepoAPI) ListDistroVersions(ctx echo.Context, distro string) error {
 
 	ents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, "atlascloud", filepath.Clean(distro)))
 	if err != nil {
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
+		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
 	}
 
 	for _, e := range ents {
@@ -213,7 +213,7 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string)
 	ents, err := ioutil.ReadDir(path.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
 	if err != nil {
 		log.Error().Err(err).Msg("ListPackagesByRepo: ReadDir")
-		sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
+		_ = sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
 	}
 
 	for _, e := range ents {
@@ -313,8 +313,8 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) erro
 		}
 		log.Warn().Bytes("stdout", so).Msg("apk index stdout")
 
-		key_file := os.Getenv("KEY_FILE")
-		c = exec.Command("/usr/bin/abuild-sign", "-k", key_file, "APKINDEX.new.tar.gz")
+		keyFile := os.Getenv("KEY_FILE")
+		c = exec.Command("/usr/bin/abuild-sign", "-k", keyFile, "APKINDEX.new.tar.gz")
 		c.Dir = pkgDir
 		stderr, err = c.StderrPipe()
 		if err != nil {
@@ -341,7 +341,10 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) erro
 		}
 		log.Warn().Bytes("stdout", so).Msg("abuild-sign stdout")
 
-		os.Rename(filepath.Join(pkgDir, "APKINDEX.new.tar.gz"), filepath.Join(pkgDir, "APKINDEX.tar.gz"))
+		err = os.Rename(filepath.Join(pkgDir, "APKINDEX.new.tar.gz"), filepath.Join(pkgDir, "APKINDEX.tar.gz"))
+		if err != nil {
+			log.Error().Err(err).Msg("failed to rename apkindex file")
+		}
 	}()
 
 	name, version, release := parseAPKFilename(file.Filename)
@@ -358,8 +361,8 @@ func (p *PkgRepoAPI) ListDistros(ctx echo.Context) error {
 func (p *PkgRepoAPI) ListOrganizations(ctx echo.Context) error {
 	orgs := listOrgs()
 	var ret []Organization
-	for _, o := range orgs {
-		ret = append(ret, Organization{Name: &o})
+	for i := range orgs {
+		ret = append(ret, Organization{Name: &orgs[i]})
 	}
 	return ctx.JSON(http.StatusOK, ret)
 }
