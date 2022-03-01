@@ -1,0 +1,61 @@
+version: "3"
+
+tasks:
+  generate-openapi:
+    sources:
+      - openapi/packages.yaml
+    generates:
+      - internal/openapi/api.gen.go
+    cmds:
+      - mkdir -p internal/openapi
+      - oapi-codegen -package api -o internal/openapi/api.gen.go openapi/packages.yaml
+      #- oapi-codegen -generate types -package api -o internal/openapi/types.gen.go openapi/packages.yaml
+      #- oapi-codegen -generate client -package api -o internal/openapi/client.gen.go openapi/packages.yaml
+      #- oapi-codegen -generate server -package api -o internal/openapi/server.gen.go openapi/packages.yaml
+      # - docker run -it --rm -v $PWD:/local openapitools/openapi-generator-cli generate \
+          # -i openapi/packages.yaml \
+          # -g go \
+          # -o /local/gen/packages
+
+  # build and push the latest, sha, and version tag
+  # this only gets run on tags
+  docker-release-prod:
+    deps: [generate-openapi]
+    cmds:
+      - echo $GHCR_TOKEN | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - docker pull ghcr.io/atlascloud/packages:latest
+      - |
+        docker build \
+          --pull \
+          -f Dockerfile \
+          --tag ghcr.io/atlascloud/packages:latest \
+          --tag ghcr.io/atlascloud/packages:$GITHUB_SHA \
+          --tag ghcr.io/atlascloud/packages:$GITHUB_REF \
+          --cache-from ghcr.io/atlascloud/packages:latest .
+      - docker push ghcr.io/atlascloud/packages --all-tags
+
+  # run tests and push with just the sha tagged (no latest or version)
+  # this gets run on every push
+  docker-test-push:
+    deps: [test]
+    cmds:
+      - echo $GHCR_TOKEN | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - docker pull ghcr.io/atlascloud/packages:latest
+      - docker build --pull -f Dockerfile --tag ghcr.io/atlascloud/packages:$GITHUB_SHA --cache-from ghcr.io/atlascloud/packages:latest .
+      - docker push ghcr.io/atlascloud/packages
+
+  docker-build:
+    deps: [generate-openapi]
+    cmds:
+      - docker build -f Dockerfile.local -t packages .
+
+  docker-run:
+    deps: [docker-build]
+    cmds:
+      # 8008 is a special port on chromebooks
+      # https://www.reddit.com/r/Crostini/wiki/index/well-known-ports
+      - docker run -it --rm -v $(pwd):/app -v /srv/packages:/srv/packages -p 8888:8888 packages
+
+  test:
+    cmds:
+      - go test ./cmd/api ./internal/openapi

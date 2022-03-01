@@ -1,0 +1,17 @@
+FROM golang:alpine
+
+RUN apk add git gcc musl-dev abuild
+
+RUN go get github.com/githubnemo/CompileDaemon
+
+WORKDIR /app
+ADD . .
+
+RUN go mod download
+
+ENTRYPOINT CompileDaemon \
+    -build="go build ./cmd/api" \
+    -color=true \
+    -graceful-kill=true \
+    -log-prefix=false \
+    -command=./api
