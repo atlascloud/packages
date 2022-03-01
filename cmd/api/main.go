@@ -68,11 +68,7 @@ func main() {
 	}
 	validatorOptions.Skipper = func(ctx echo.Context) bool {
 		// we want the prometheus middleware to handle this, not the normal openapi route
-		if ctx.Path() == "/metrics" {
-			return true
-		}
-
-		return false
+		return ctx.Path() == "/metrics"
 	}
 	e.Use(middleware.OapiRequestValidatorWithOptions(swagger, validatorOptions))
 
