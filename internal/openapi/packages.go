@@ -39,13 +39,16 @@ func NewPkgRepo() *PkgRepoAPI {
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendRepoError(ctx echo.Context, code int, message string) error {
+func sendRepoError(ctx echo.Context, code int, message string) {
 	repoErr := Error{
 		Code:    int32(code),
 		Message: message,
 	}
 	err := ctx.JSON(code, repoErr)
-	return err
+	// return err
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to return json error")
+	}
 }
 
 // ListRepos - list repos in an org
@@ -55,7 +58,7 @@ func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 	repos, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine"))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to readdir org")
-		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 	}
 
 	for _, r := range repos {
@@ -64,7 +67,7 @@ func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 			nents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", r.Name()))
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to readdir r.Name")
-				_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+				sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 			}
 			for _, ne := range nents {
 				// fmt.Println(e, ne)
@@ -90,7 +93,8 @@ func (p *PkgRepoAPI) CreateRepo(ctx echo.Context, org string) error {
 	var newRepo NewRepo
 	err := ctx.Bind(&newRepo)
 	if err != nil {
-		return sendRepoError(ctx, http.StatusBadRequest, "Invalid format for NewRepo")
+		log.Warn().Err(err).Msg("failed to create repo")
+		sendRepoError(ctx, http.StatusBadRequest, "Invalid format for NewRepo")
 	}
 	// We now have a repo, let's add it to our "database".
 
@@ -121,7 +125,7 @@ func (p *PkgRepoAPI) FindRepoByName(ctx echo.Context, org, repo string) error {
 	repos, err := filepath.Glob(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", "*", repo))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to glob repo")
-		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
 	}
 	for _, ne := range repos {
 		// TODO seems like there should be a more foolproof way, but this works for now
@@ -165,7 +169,7 @@ func (p *PkgRepoAPI) ListDistroVersions(ctx echo.Context, distro string) error {
 
 	ents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, "atlascloud", filepath.Clean(distro)))
 	if err != nil {
-		_ = sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
+		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
 	}
 
 	for _, e := range ents {
@@ -213,7 +217,7 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string)
 	ents, err := ioutil.ReadDir(path.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
 	if err != nil {
 		log.Error().Err(err).Msg("ListPackagesByRepo: ReadDir")
-		_ = sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
+		sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
 	}
 
 	for _, e := range ents {
