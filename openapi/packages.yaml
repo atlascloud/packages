@@ -1,3 +1,4 @@
+---
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -11,10 +12,10 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-    servers:
-      - url: https://packages.atlascloud.xyz/api
-servers:
-  - url: http://localhost:8888/api
+    # servers:
+    # - url: https://packages.atlascloud.xyz/api
+    # servers:
+    # - url: http://localhost:8888/api
 paths:
   /distributions:
     get:
@@ -95,8 +96,8 @@ paths:
             type: string
       responses:
         '200':
-           description: org info
-           content:
+          description: org info
+          content:
             application/json:
               schema:
                 type: object
@@ -145,12 +146,12 @@ paths:
           required: true
           schema:
             type: string
-        # - name: arch
-        #   in: query
-        #   description: the arch of the package
-        #   required: false
-        #   schema:
-        #     type: string
+          # - name: arch
+          # in: query
+          # description: the arch of the package
+          # required: false
+          # schema:
+          # type: string
       responses:
         '200':
           description: repos
@@ -433,7 +434,8 @@ components:
           description: name of the organization
         repos:
           type: array
-          $ref: '#/components/schemas/Repo'
+          items:
+            $ref: '#/components/schemas/Repo'
           description: the list of repos that belong to this org (this data may be dependent on auth)
     Package:
       type: object
@@ -466,7 +468,8 @@ components:
         architectures:
           type: array
           description: list of architectures in this repo
-          $ref: '#/components/schemas/Architecture'
+          items:
+            $ref: '#/components/schemas/Architecture'
         description:
           type: string
           description: Description of the repo - not functional - just for ease of use

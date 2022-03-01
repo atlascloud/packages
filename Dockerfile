@@ -14,10 +14,10 @@ RUN ["go", "build", "./cmd/api"]
 FROM alpine:edge
 
 LABEL maintainer="iggy@atlascloud.xyz"
-LABEL org.opencontainers.image.source https://github.com/atlascloud/packages
+LABEL org.opencontainers.image.source=https://github.com/atlascloud/packages
 EXPOSE 8888
 
-RUN ["apk", "add", "abuild"]
+RUN ["apk", "add", "--no-cache", "abuild"]
 
 COPY ./api /app/
 
