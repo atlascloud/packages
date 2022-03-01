@@ -313,7 +313,7 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) erro
 		}
 		log.Warn().Bytes("stdout", so).Msg("apk index stdout")
 
-		key_file = os.Getenv("KEY_FILE")
+		key_file := os.Getenv("KEY_FILE")
 		c = exec.Command("/usr/bin/abuild-sign", "-k", key_file, "APKINDEX.new.tar.gz")
 		c.Dir = pkgDir
 		stderr, err = c.StderrPipe()
