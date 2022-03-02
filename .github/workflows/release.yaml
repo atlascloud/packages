@@ -1,5 +1,5 @@
 ---
-name: Release
+name: Release Tag
 "on":
   push:
     tags:
@@ -15,11 +15,20 @@ jobs:
           go-version: 1.17
       - uses: arduino/setup-task@v1
       - uses: actions/checkout@v1
-      - run: task test
+      - name: Run tests
+        run: task test
   build:
     name: build and push
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: arduino/setup-task@v1
-      - run: task docker-release-prod
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        run: |
+          env
+          task build docker:release-prod
