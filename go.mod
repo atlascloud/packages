@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/deepmap/oapi-codegen v1.4.0
-	github.com/getkin/kin-openapi v0.13.0
+	github.com/getkin/kin-openapi v0.90.0
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/pkg/xattr v0.4.5
