@@ -14,14 +14,14 @@ jobs:
         with:
           go-version: 1.17
       - uses: arduino/setup-task@v1
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Run tests
         run: task test
   build:
     name: build and push
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: arduino/setup-task@v1
       - uses: docker/login-action@v1
         with:
