@@ -9,5 +9,5 @@ require (
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/pkg/xattr v0.4.5
 	github.com/rs/zerolog v1.20.0
-	github.com/steinfletcher/apitest v1.4.16
+	github.com/steinfletcher/apitest v1.5.11
 )
