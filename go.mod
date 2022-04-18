@@ -7,7 +7,7 @@ require (
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
-	github.com/pkg/xattr v0.4.6
+	github.com/pkg/xattr v0.4.7
 	github.com/rs/zerolog v1.26.1
 	github.com/steinfletcher/apitest v1.5.11
 )
@@ -35,7 +35,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
-	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect
+	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
