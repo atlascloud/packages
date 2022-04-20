@@ -146,12 +146,12 @@ paths:
           required: true
           schema:
             type: string
-          # - name: arch
-          # in: query
-          # description: the arch of the package
-          # required: false
-          # schema:
-          # type: string
+            # - name: arch
+            # in: query
+            # description: the arch of the package
+            # required: false
+            # schema:
+            # type: string
       responses:
         '200':
           description: repos
@@ -322,18 +322,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-# try to get the LCD of everything... probably poorly
-# /o/{org}/p/{package_type}/r/{repotype}/v/{version}/
-# package_type = debian/alpine/npm/maven/etc
-# repo_type = community/testing/main/
-# repo version = stable/buster/3.14/latest/beta
-# /o/atlascloud/p/alpine/r/main/v/edge
-# /o/atlascloud/p/alpine/r/main/v/3.14
-# /o/atlascloud/p/debian/r/main/v/bullseye
-# /o/atlascloud/p/debian/r/contrib/v/bullseye
-# /o/atlascloud/p/debian/r/contrib/v/10.0
-# /o/atlascloud/p/npm/r/stable/v/latest
-# /o/atlascloud/p/npm/r/beta/v/latest
+  # try to get the LCD of everything... probably poorly
+  # /o/{org}/p/{package_type}/r/{repotype}/v/{version}/
+  # package_type = debian/alpine/npm/maven/etc
+  # repo_type = community/testing/main/
+  # repo version = stable/buster/3.14/latest/beta
+  # /o/atlascloud/p/alpine/r/main/v/edge
+  # /o/atlascloud/p/alpine/r/main/v/3.14
+  # /o/atlascloud/p/debian/r/main/v/bullseye
+  # /o/atlascloud/p/debian/r/contrib/v/bullseye
+  # /o/atlascloud/p/debian/r/contrib/v/10.0
+  # /o/atlascloud/p/npm/r/stable/v/latest
+  # /o/atlascloud/p/npm/r/beta/v/latest
 
   # healthchecks/metrics/etc
   # /metrics comes from prometheus echo middleware
