@@ -2,6 +2,9 @@ FROM golang:alpine AS builder
 
 WORKDIR /app
 
+# go build needs git to be installed
+RUN apk add --no-cache git
+
 # copy just the go mod file and download mods so we can hopefully get some docker layer caching benefits
 COPY --chown=1000:1000 ./go.* /app/
 RUN ["go", "mod", "download"]
