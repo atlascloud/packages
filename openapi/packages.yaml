@@ -22,20 +22,20 @@ paths:
       description: list of supported distributions (currently just Alpine)
       operationId: list distros
       responses:
-        '200':
+        "200":
           description: distributions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Distribution'
+                  $ref: "#/components/schemas/Distribution"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /distributions/{distro}/versions:
     get:
       description: list of distro versions
@@ -48,20 +48,20 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: versions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DistroVersion'
+                  $ref: "#/components/schemas/DistroVersion"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /o:
     get:
@@ -69,20 +69,20 @@ paths:
       description: list of organizations
       operationId: list organizations
       responses:
-        '200':
+        "200":
           description: organizations
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Organization'
+                  $ref: "#/components/schemas/Organization"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /o/{org}:
     get:
       description: info about an organizations
@@ -95,14 +95,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: org info
           content:
             application/json:
               schema:
                 type: object
                 items:
-                  $ref: '#/components/schemas/Organization'
+                  $ref: "#/components/schemas/Organization"
     post:
       description: Create new repo
       operationId: createRepo
@@ -119,22 +119,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewRepo'
+              $ref: "#/components/schemas/NewRepo"
       responses:
-        '200':
+        "200":
           description: repos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Repo'
+                  $ref: "#/components/schemas/Repo"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /o/{org}/r:
     get:
       description: Return a list of package repositories for an org
@@ -153,20 +153,20 @@ paths:
             # schema:
             # type: string
       responses:
-        '200':
+        "200":
           description: repos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Repo'
+                  $ref: "#/components/schemas/Repo"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /o/{org}/r/{repo}:
     get:
       description: Returns repo info from a repo
@@ -185,20 +185,20 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: repo response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Repo'
+                  $ref: "#/components/schemas/Repo"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /o/{org}/r/{repo}/v:
     get:
       description: list of versions
@@ -217,20 +217,20 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: versions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DistroVersion'
+                  $ref: "#/components/schemas/DistroVersion"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /o/{org}/r/{repo}/v/{ver}:
     get:
       description: Returns a list of packages based on repo versions
@@ -255,20 +255,20 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: packages response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Package'
+                  $ref: "#/components/schemas/Package"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       description: Create a package in a repo
       operationId: create package
@@ -307,20 +307,20 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: package response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Package'
+                  $ref: "#/components/schemas/Package"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   # try to get the LCD of everything... probably poorly
   # /o/{org}/p/{package_type}/r/{repotype}/v/{version}/
@@ -342,7 +342,7 @@ paths:
   /health/ping:
     get:
       responses:
-        '200':
+        "200":
           description: ping pong
           content:
             text/plain:
@@ -353,7 +353,7 @@ paths:
   /health/ready:
     get:
       responses:
-        '200':
+        "200":
           description: ready or not
           content:
             text/plain:
@@ -363,14 +363,13 @@ paths:
     # this is just to satisfy uptimerobit
     head:
       responses:
-        '200':
+        "200":
           description: ready or not
           content:
             text/plain:
               schema:
                 type: string
                 example: ready
-
 
 components:
   securitySchemes:
@@ -394,7 +393,7 @@ components:
     DistroVersions:
       type: array
       items:
-        $ref: '#/components/schemas/DistroVersion'
+        $ref: "#/components/schemas/DistroVersion"
     Error:
       type: object
       required:
@@ -435,7 +434,7 @@ components:
         repos:
           type: array
           items:
-            $ref: '#/components/schemas/Repo'
+            $ref: "#/components/schemas/Repo"
           description: the list of repos that belong to this org (this data may be dependent on auth)
     Package:
       type: object
@@ -469,7 +468,7 @@ components:
           type: array
           description: list of architectures in this repo
           items:
-            $ref: '#/components/schemas/Architecture'
+            $ref: "#/components/schemas/Architecture"
         description:
           type: string
           description: Description of the repo - not functional - just for ease of use
