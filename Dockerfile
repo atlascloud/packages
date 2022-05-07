@@ -6,10 +6,10 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 # copy just the go mod file and download mods so we can hopefully get some docker layer caching benefits
-COPY --chown=1000:1000 ./go.* /app/
+COPY ./go.* /app/
 RUN ["go", "mod", "download"]
 
-COPY --chown=1000:1000 ./ /app/
+COPY ./ /app/
 RUN ["go", "build", "./cmd/api"]
 # RUN ["find", "."]
 
@@ -18,11 +18,14 @@ FROM alpine:edge
 
 LABEL maintainer="iggy@atlascloud.xyz"
 LABEL org.opencontainers.image.source=https://github.com/atlascloud/packages
+LABEL org.opencontainers.image.description="API for managing packages service"
+
 EXPOSE 8888
 
+# the service internally calls abuild to create the package index
 RUN ["apk", "add", "--no-cache", "abuild"]
 
-COPY ./api /app/
+COPY --from=builder /app/api /app/
 
 USER 1000:1000
 
