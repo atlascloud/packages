@@ -1,6 +1,7 @@
 ---
 ignored:
-  - DL3018 # this is one of the dumbest rules I've ever seen. Alpine doesn't
-           # keep multiple versions of packages around, so pinning to a
-           # specific version is just a recipe for having to constantly update
-           # the versions in your Dockerfile
+  # this is one of the dumbest rules I've ever seen. Alpine doesn't
+  # keep multiple versions of packages around, so pinning to a
+  # specific version is just a recipe for having to constantly update
+  # the versions in your Dockerfile
+  - DL3018
