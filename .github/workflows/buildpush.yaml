@@ -1,19 +1,10 @@
 ---
-name: Test and push SHA container tag
+name: push sha container tag
 "on":
   push:
+    branches: ["main"]
 
 jobs:
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.17
-      - uses: arduino/setup-task@v1
-      - uses: actions/checkout@v3
-      - run: task test
   build:
     name: build and push
     runs-on: ubuntu-latest
