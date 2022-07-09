@@ -9,7 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/xattr v0.4.7
 	github.com/rs/zerolog v1.27.0
-	github.com/steinfletcher/apitest v1.5.11
+	github.com/steinfletcher/apitest v1.5.12
 )
 
 require (
