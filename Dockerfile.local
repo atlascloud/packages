@@ -4,8 +4,10 @@ RUN apk add git gcc musl-dev abuild
 
 RUN go get github.com/githubnemo/CompileDaemon
 
+USER 1000:1000
+
 WORKDIR /app
-ADD . .
+COPY . .
 
 RUN go mod download
 

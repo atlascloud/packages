@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -104,18 +103,14 @@ func (p *PkgRepoAPI) CreateRepo(ctx echo.Context, org string) error {
 
 	// Now, we have to return the NewRepo
 	err = ctx.JSON(http.StatusCreated, repo)
-	if err != nil {
-		// Something really bad happened, tell Echo that our handler failed
-		return err
-	}
 
 	// Return no error. This refers to the handler. Even if we return an HTTP
 	// error, but everything else is working properly, tell Echo that we serviced
 	// the error. We should only return errors from Echo handlers if the actual
 	// servicing of the error on the infrastructure level failed. Returning an
 	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
-	// return nil.
-	return nil
+	// return nil or err if something bad actually happened
+	return err
 }
 
 // FindRepoByName - return a pkgrepo from an
@@ -214,7 +209,7 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string)
 	// 	sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("Invalid slug: %s", err))
 	// }
 
-	ents, err := ioutil.ReadDir(path.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
+	ents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
 	if err != nil {
 		log.Error().Err(err).Msg("ListPackagesByRepo: ReadDir")
 		sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
