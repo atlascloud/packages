@@ -22,6 +22,9 @@ LABEL org.opencontainers.image.description="API for managing packages service"
 
 EXPOSE 8888
 
+HEALTHCHECK --interval=5m --timeout=10s \
+    CMD curl -fs localhost:8888/health/ready
+
 # the service internally calls abuild to create the package index
 RUN ["apk", "add", "--no-cache", "abuild"]
 

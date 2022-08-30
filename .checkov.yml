@@ -1,0 +1,5 @@
+skip-check:
+  # Some of these are just wrong, the others are at best nice suggestions
+  - CKV_OPENAPI_3
+  - CKV_OPENAPI_4
+  - CKV_OPENAPI_5

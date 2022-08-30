@@ -11,6 +11,9 @@ COPY . .
 
 RUN go mod download
 
+HEALTHCHECK --interval=5m --timeout=10s \
+    CMD curl -fs localhost:8888/health/ready
+
 ENTRYPOINT CompileDaemon \
     -build="go build ./cmd/api" \
     -color=true \
