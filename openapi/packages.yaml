@@ -16,6 +16,8 @@ info:
     # - url: https://packages.atlascloud.xyz/api
     # servers:
     # - url: http://localhost:8888/api
+security:
+  - bearerAuth: []
 paths:
   /distributions:
     get:
