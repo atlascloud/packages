@@ -7,7 +7,7 @@ require (
 	github.com/getkin/kin-openapi v0.99.0
 	github.com/labstack/echo-contrib v0.13.0
 	github.com/labstack/echo/v4 v4.9.0
-	github.com/pkg/xattr v0.4.8
+	github.com/pkg/xattr v0.4.9
 	github.com/rs/zerolog v1.28.0
 	github.com/steinfletcher/apitest v1.5.12
 )
