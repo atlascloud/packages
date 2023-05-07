@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -54,7 +53,7 @@ func sendRepoError(ctx echo.Context, code int, message string) {
 func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 	var result []Repo
 
-	repos, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine"))
+	repos, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine"))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to readdir org")
 		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
@@ -63,7 +62,7 @@ func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
 	for _, r := range repos {
 		log.Trace().Interface("repos -> r", r).Msg("repos loop")
 		if r.IsDir() {
-			nents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", r.Name()))
+			nents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", r.Name()))
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to readdir r.Name")
 				sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
@@ -162,7 +161,7 @@ func (p *PkgRepoAPI) HeadHealthReady(ctx echo.Context) error {
 func (p *PkgRepoAPI) ListDistroVersions(ctx echo.Context, distro string) error {
 	var d []DistroVersion
 
-	ents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, "atlascloud", filepath.Clean(distro)))
+	ents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, "atlascloud", filepath.Clean(distro)))
 	if err != nil {
 		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
 	}
@@ -209,7 +208,7 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string)
 	// 	sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("Invalid slug: %s", err))
 	// }
 
-	ents, err := ioutil.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
+	ents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
 	if err != nil {
 		log.Error().Err(err).Msg("ListPackagesByRepo: ReadDir")
 		sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
@@ -268,12 +267,12 @@ func generateAPKIndex(pkgDir string) {
 		return
 	}
 
-	se, err := ioutil.ReadAll(stderr)
+	se, err := io.ReadAll(stderr)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read stderr")
 	}
 	log.Warn().Bytes("stderr", se).Msg("apk index stderr")
-	so, err := ioutil.ReadAll(stdout)
+	so, err := io.ReadAll(stdout)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read stdout")
 	}
@@ -296,12 +295,12 @@ func generateAPKIndex(pkgDir string) {
 		log.Error().Str("command", c.String()).Err(err).Msg("failed to run abuild-sign")
 		return
 	}
-	se, err = ioutil.ReadAll(stderr)
+	se, err = io.ReadAll(stderr)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read stderr")
 	}
 	log.Warn().Bytes("stderr", se).Msg("abuild-sign stderr")
-	so, err = ioutil.ReadAll(stdout)
+	so, err = io.ReadAll(stdout)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read stdout")
 	}
