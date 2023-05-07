@@ -4,6 +4,8 @@ name: push sha container tag
   push:
     branches: ["main"]
 
+permissions: read-all
+
 jobs:
   build:
     name: build and push

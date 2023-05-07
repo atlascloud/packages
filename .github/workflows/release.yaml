@@ -5,6 +5,8 @@ name: Release Tag
     tags:
       - v*
 
+permissions: read-all
+
 jobs:
   test:
     name: test
