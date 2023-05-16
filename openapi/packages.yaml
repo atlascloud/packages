@@ -343,6 +343,7 @@ paths:
   # realizing it's from a middleware
   /health/ping:
     get:
+      security: []
       responses:
         "200":
           description: ping pong
@@ -354,6 +355,7 @@ paths:
 
   /health/ready:
     get:
+      security: []
       responses:
         "200":
           description: ready or not
@@ -364,6 +366,7 @@ paths:
                 example: ready
     # this is just to satisfy uptimerobit
     head:
+      security: []
       responses:
         "200":
           description: ready or not
