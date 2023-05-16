@@ -247,7 +247,7 @@ func generateAPKIndex(pkgDir string) {
 		log.Warn().Err(err).Msg("failed to glob apks")
 	}
 	// c := exec.Command("/sbin/apk", "index", "-o", "APKINDEX.new.tar.gz", "-x", "APKINDEX.tar.gz", "-d", "atlascloud main edge")
-	args := []string{"index", "--no-warnings", "-o", "APKINDEX.new.tar.gz", "-d", "atlascloud main edge"}
+	args := []string{"index", "--no-warnings", "--rewrite-arch", "x86_64", "-o", "APKINDEX.new.tar.gz", "-d", "atlascloud main edge"}
 	args = append(args, apks...)
 	c := exec.Command("/sbin/apk", args...)
 
