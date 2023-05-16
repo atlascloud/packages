@@ -10,6 +10,8 @@ jobs:
   build:
     name: build and push
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v3
       - uses: arduino/setup-task@v1
