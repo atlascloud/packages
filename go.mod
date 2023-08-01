@@ -3,7 +3,7 @@ module github.com/iggy/packages
 go 1.19
 
 require (
-	github.com/deepmap/oapi-codegen v1.13.0
+	github.com/deepmap/oapi-codegen v1.13.2
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.1
