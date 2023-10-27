@@ -2,6 +2,9 @@
 name: Test
 "on":
   push:
+    branches-ignore:
+      # if we're merging into main, the tests already passed in the branch
+      - main
 
 permissions: read-all
 

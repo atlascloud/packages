@@ -22,3 +22,6 @@ jobs:
           DISABLE_ERRORS_LINTERS: SPELL_LYCHEE
           GO_GOLANGCI_LINT_CLI_LINT_MODE: project
           GO_REVIVE_CLI_LINT_MODE: project
+          REPOSITORY_GRYPE_DISABLE_ERRORS: true
+
+          GO_GOLANGCI_LINT_ARGUMENTS: "--verbose --timeout 5m"

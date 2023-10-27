@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	repoApi "github.com/iggy/packages/internal/openapi"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/oapi-codegen/echo-middleware"
 )
 
 func main() {
@@ -40,14 +40,14 @@ func main() {
 	p.Use(e)
 
 	// Log all requests
-	e.Use(echomiddleware.Logger())
+	e.Use(middleware.Logger())
 
 	// secure middleware
-	e.Use(echomiddleware.Secure())
+	e.Use(middleware.Secure())
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
-	validatorOptions := &middleware.Options{}
+	validatorOptions := &echomiddleware.Options{}
 
 	validatorOptions.Options.AuthenticationFunc = func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		// log.Debug().
@@ -70,7 +70,7 @@ func main() {
 		// we want the prometheus middleware to handle this, not the normal openapi route
 		return ctx.Path() == "/metrics"
 	}
-	e.Use(middleware.OapiRequestValidatorWithOptions(swagger, validatorOptions))
+	e.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, validatorOptions))
 
 	// We now register our API above as the handler for the interface
 	repoApi.RegisterHandlers(e, papi)
