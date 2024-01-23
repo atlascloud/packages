@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/deepmap/oapi-codegen v1.16.2
-	github.com/getkin/kin-openapi v0.122.0
+	github.com/getkin/kin-openapi v0.123.0
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/echo-middleware v1.0.1
@@ -33,8 +33,8 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.9.1 // indirect
-	github.com/go-openapi/jsonpointer v0.20.0 // indirect
-	github.com/go-openapi/swag v0.22.4 // indirect
+	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.5 // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
