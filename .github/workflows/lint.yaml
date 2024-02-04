@@ -45,10 +45,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_LINTERS: SPELL_CSPELL
           DISABLE_ERRORS_LINTERS: SPELL_LYCHEE
-          # GO_GOLANGCI_LINT_CLI_LINT_MODE: project
-          # GO_REVIVE_CLI_LINT_MODE: project
+          GO_GOLANGCI_LINT_CLI_LINT_MODE: project
+          GO_REVIVE_CLI_LINT_MODE: project
           REPOSITORY_GRYPE_DISABLE_ERRORS: true
-          # GO_GOLANGCI_LINT_ARGUMENTS: "--verbose --timeout 5m"
+          GO_GOLANGCI_LINT_ARGUMENTS: "--verbose --timeout 5m ./..."
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts

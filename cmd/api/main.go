@@ -1,3 +1,4 @@
+// package main is this really necessary
 package main
 
 import (
@@ -17,7 +18,7 @@ import (
 )
 
 func main() {
-	var port = flag.Int("port", 8888, "Port for test HTTP server")
+	var port = flag.Int("port", 8888, "Port for HTTP server")
 	flag.Parse()
 
 	swagger, err := repoApi.GetSwagger()
@@ -36,7 +37,7 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 	// Enable metrics middleware
-	p := prometheus.NewPrometheus("echo", nil)
+	p := prometheus.NewPrometheus("packages", nil)
 	p.Use(e)
 
 	// Log all requests
@@ -50,14 +51,11 @@ func main() {
 	validatorOptions := &echomiddleware.Options{}
 
 	validatorOptions.Options.AuthenticationFunc = func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
-		// log.Debug().
-		// 	Interface("ctx", ctx).
-		// 	Interface("input.PathParams", input.RequestValidationInput.PathParams).
-		// 	Interface("input.Route", input.RequestValidationInput.Route).
-		// 	Msg("authenticator input")
 		orgName := input.RequestValidationInput.PathParams["org"]
-		repoName := input.RequestValidationInput.PathParams["slug"]
-		validTokens := repoApi.GetValidTokens(orgName, repoName)
+		validTokens := repoApi.GetValidTokens(orgName)
+		if input.RequestValidationInput.Request.Header.Get("Authorization") == "" {
+			return errors.New("no auth token")
+		}
 		token := strings.Split(input.RequestValidationInput.Request.Header["Authorization"][0], " ")[1]
 		for _, t := range validTokens {
 			if token == t {

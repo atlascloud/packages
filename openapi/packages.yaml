@@ -1,75 +1,29 @@
 ---
 openapi: "3.0.0"
 info:
-  version: 1.0.0
+  version: 2.0.0-beta1
   title: Package Repo API
-  description: API for kws1.com package repo
+  description: API for AtlasCloud package repo
   termsOfService: https://atlascloud.xyz/tos
   contact:
-    name: kws1.com package team
+    name: AtlasCloud package team
     email: packages@atlascloud.xyz
     url: https://packages.atlascloud.xyz
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-    # servers:
-    # - url: https://packages.atlascloud.xyz/api
-    # servers:
-    # - url: http://localhost:8888/api
+servers:
+  - url: https://packages.atlascloud.xyz/api
+  - url: http://localhost:8888
 security:
   - bearerAuth: []
 paths:
-  /distributions:
-    get:
-      description: list of supported distributions (currently just Alpine)
-      operationId: list distros
-      responses:
-        "200":
-          description: distributions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Distribution"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /distributions/{distro}/versions:
-    get:
-      description: list of distro versions
-      operationId: list distro versions
-      parameters:
-        - name: distro
-          in: path
-          description: the name of the distribution to look up versions
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: versions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DistroVersion"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /o:
+  /orgs:
     get:
       # TODO pagination
       description: list of organizations
-      operationId: list organizations
+      operationId: ListOrganizations
+      security: []
       responses:
         "200":
           description: organizations
@@ -85,10 +39,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /o/{org}:
+  /{org}:
     get:
       description: info about an organizations
-      operationId: get organization
+      operationId: GetOrganization
       parameters:
         - name: org
           in: path
@@ -107,7 +61,7 @@ paths:
                   $ref: "#/components/schemas/Organization"
     post:
       description: Create new repo
-      operationId: createRepo
+      operationId: CreateRepo
       parameters:
         - name: org
           in: path
@@ -137,10 +91,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /o/{org}/r:
+  /{org}/distros:
     get:
-      description: Return a list of package repositories for an org
-      operationId: list repos
+      description: Return a list of distributions for an org
+      operationId: ListDistros
       parameters:
         - name: org
           in: path
@@ -148,12 +102,108 @@ paths:
           required: true
           schema:
             type: string
-            # - name: arch
-            # in: query
-            # description: the arch of the package
-            # required: false
-            # schema:
-            # type: string
+      responses:
+        "200":
+          description: repos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Distribution"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /{org}/{distro}:
+    get:
+      description: Return info about a distribution for an org
+      operationId: GetOrgDistro
+      parameters:
+        - name: org
+          in: path
+          description: the name of the organization
+          required: true
+          schema:
+            type: string
+        - name: distro
+          in: path
+          description: the name of the distribution
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: repos
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/Distribution"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /{org}/{distro}/versions:
+    get:
+      description: list of versions
+      operationId: ListVersions
+      parameters:
+        - name: org
+          in: path
+          description: the name of the organization
+          required: true
+          schema:
+            type: string
+        - name: distro
+          in: path
+          description: the name of the distribution
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RepoVersion"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /{org}/{distro}/{version}/repos:
+    get:
+      description: List package repositories for an organization and distribution
+      operationId: ListRepos
+      parameters:
+        - name: org
+          in: path
+          description: the name of the organization
+          required: true
+          schema:
+            type: string
+        - name: distro
+          in: path
+          description: the name of the distribution
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          description: the version of the distribution
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: repos
@@ -169,14 +219,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /o/{org}/r/{repo}:
+  /{org}/{distro}/{version}/{repo}:
     get:
       description: Returns repo info from a repo
-      operationId: find repo by name
+      operationId: FindRepoByName
       parameters:
         - name: org
           in: path
           description: the name of the organization
+          required: true
+          schema:
+            type: string
+        - name: distro
+          in: path
+          description: the name of the distribution
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          description: the version of the distribution
           required: true
           schema:
             type: string
@@ -192,7 +254,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
+                type: object
                 items:
                   $ref: "#/components/schemas/Repo"
         default:
@@ -201,14 +263,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /o/{org}/r/{repo}/v:
+  /{org}/{distro}/{version}/{repo}/architectures:
     get:
-      description: list of versions
-      operationId: list versions
+      description: List package repository architectures for an organization and distribution
+      operationId: ListArches
       parameters:
         - name: org
           in: path
           description: the name of the organization
+          required: true
+          schema:
+            type: string
+        - name: distro
+          in: path
+          description: the name of the distribution
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          description: the version of the distribution
           required: true
           schema:
             type: string
@@ -220,42 +294,55 @@ paths:
             type: string
       responses:
         "200":
-          description: versions
+          description: architectures
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DistroVersion"
+                  $ref: "#/components/schemas/Architecture"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /o/{org}/r/{repo}/v/{ver}:
+
+  /{org}/{distro}/{version}/{repo}/{arch}/pkgs:
+    parameters:
+      - name: org
+        in: path
+        description: the name of the organization
+        required: true
+        schema:
+          type: string
+      - name: distro
+        in: path
+        description: the name of the distribution
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        description: version of repo to look for packages
+        required: true
+        schema:
+          type: string
+      - name: repo
+        in: path
+        description: name of repo to look for packages
+        required: true
+        schema:
+          type: string
+      - name: arch
+        in: path
+        description: arch of repo to look for packages
+        required: true
+        schema:
+          type: string
     get:
-      description: Returns a list of packages based on repo versions
-      operationId: list packages by repo
-      parameters:
-        - name: org
-          in: path
-          description: the name of the organization
-          required: true
-          schema:
-            type: string
-        - name: repo
-          in: path
-          description: name of repo to look for packages
-          required: true
-          schema:
-            type: string
-        - name: ver
-          in: path
-          description: version of repo to look for packages
-          required: true
-          schema:
-            type: string
+      description: Returns a list of packages based on distro repo and version
+      operationId: ListPackagesByRepo
       responses:
         "200":
           description: packages response
@@ -273,28 +360,7 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       description: Create a package in a repo
-      operationId: create package
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: org
-          in: path
-          description: the name of the organization
-          required: true
-          schema:
-            type: string
-        - name: repo
-          in: path
-          description: repo of repo to look for packages
-          required: true
-          schema:
-            type: string
-        - name: ver
-          in: path
-          description: version of repo to look for packages
-          required: true
-          schema:
-            type: string
+      operationId: CreatePackage
       requestBody:
         description: package to add
         required: true
@@ -303,8 +369,7 @@ paths:
             schema:
               type: object
               properties:
-                architecture:
-                  type: string
+                # this is the actual file upload
                 package:
                   type: string
                   format: binary
@@ -352,7 +417,6 @@ paths:
               schema:
                 type: string
                 example: pong
-
   /health/ready:
     get:
       security: []
@@ -386,19 +450,12 @@ components:
       type: string
     Distribution:
       type: string
-    DistroVersion:
+    RepoVersion:
       type: string
-      # type: object
-      # required:
-      #   - name
-      # properties:
-      #   name:
-      #     type: string
-      #     description: the version of the distro
-    DistroVersions:
+    RepoVersions:
       type: array
       items:
-        $ref: "#/components/schemas/DistroVersion"
+        $ref: "#/components/schemas/RepoVersion"
     Error:
       type: object
       required:
@@ -428,18 +485,16 @@ components:
         description:
           type: string
           description: Description of the repo to add - not functional - just for ease of use
-    # Organization:
-    #   type: string
     Organization:
       type: object
       properties:
         name:
           type: string
           description: name of the organization
-        repos:
+        distributions:
           type: array
           items:
-            $ref: "#/components/schemas/Repo"
+            $ref: "#/components/schemas/Distribution"
           description: the list of repos that belong to this org (this data may be dependent on auth)
     Package:
       type: object
@@ -463,12 +518,6 @@ components:
         name:
           type: string
           description: Name of the repo
-        repo:
-          type: string
-          description: computed from repo/version
-        version:
-          type: string
-          description: the distro version the repo belongs to
         architectures:
           type: array
           description: list of architectures in this repo
