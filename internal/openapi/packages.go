@@ -1,16 +1,13 @@
+// package api why do I have to put this in every file and then keep them all up to date, etc
 package api
 
 import (
-	"fmt"
-	"io"
+	"errors"
 	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
+	"gitlab.alpinelinux.org/alpine/go/repository"
 )
 
 // TODO
@@ -18,12 +15,11 @@ import (
 //  * Beef up path traversal protection
 
 // PackageBaseDirectory - the base directory where packages are organized/stored
-var PackageBaseDirectory = "/srv/packages"
+var PackageBaseDirectory = "file:///srv/packages/"
 
 // PkgRepoAPI - a collection packages, repos, versions, etc
 type PkgRepoAPI struct {
-	Repos          map[string]Repo
-	DistroVersions []*DistroVersion
+	Repos map[string]Repo
 }
 
 // NewPkgRepo - called by main function to
@@ -50,36 +46,14 @@ func sendRepoError(ctx echo.Context, code int, message string) {
 }
 
 // ListRepos - list repos in an org
-func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org string) error {
-	var result []Repo
-
-	repos, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine"))
+func (p *PkgRepoAPI) ListRepos(ctx echo.Context, org, distro, version string) error {
+	// log.Debug().Str("org", org).Msg("ListRepos request")
+	result, err := listRepos(org, distro, version)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to readdir org")
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
+		log.Error().Err(err).Msg("failed to listRepos")
 	}
-
-	for _, r := range repos {
-		log.Trace().Interface("repos -> r", r).Msg("repos loop")
-		if r.IsDir() {
-			nents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", r.Name()))
-			if err != nil {
-				log.Warn().Err(err).Msg("failed to readdir r.Name")
-				sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
-			}
-			for _, ne := range nents {
-				// fmt.Println(e, ne)
-				r := Repo{
-					Name:    ne.Name(),
-					Version: r.Name(),
-					// Slug:    slug.Make(fmt.Sprintf("%s %s", e.Name(), ne.Name())),
-				}
-
-				// p.Repos[r.Slug] = r
-
-				result = append(result, r)
-			}
-		}
+	if len(result) == 0 {
+		return ctx.JSON(http.StatusInternalServerError, Error{Code: http.StatusInternalServerError, Message: "org does not have any repos"})
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -91,56 +65,26 @@ func (p *PkgRepoAPI) CreateRepo(ctx echo.Context, org string) error {
 	var newRepo NewRepo
 	err := ctx.Bind(&newRepo)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to create repo")
+		log.Warn().Err(err).Str("org", org).Msg("failed to create repo")
 		sendRepoError(ctx, http.StatusBadRequest, "Invalid format for NewRepo")
 	}
 	// We now have a repo, let's add it to our "database".
+	// TODO
 
-	// We handle repos, not NewRepos, which have an additional ID field
-	var repo Repo
-	repo.Name = newRepo.Name
-
-	// Now, we have to return the NewRepo
-	err = ctx.JSON(http.StatusCreated, repo)
-
-	// Return no error. This refers to the handler. Even if we return an HTTP
-	// error, but everything else is working properly, tell Echo that we serviced
-	// the error. We should only return errors from Echo handlers if the actual
-	// servicing of the error on the infrastructure level failed. Returning an
-	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
-	// return nil or err if something bad actually happened
-	return err
+	return ctx.JSON(http.StatusCreated, Repo{Name: newRepo.Name})
 }
 
-// FindRepoByName - return a pkgrepo from an
-func (p *PkgRepoAPI) FindRepoByName(ctx echo.Context, org, repo string) error {
-	var repoInfo []Repo
+// FindRepoByName - return a repo info from org, distro, version, repo name
+func (p *PkgRepoAPI) FindRepoByName(ctx echo.Context, org, distro, version, repo string) error {
+	repoInfo := getRepoInfo(org, distro, version, repo)
 
-	repos, err := filepath.Glob(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", "*", repo))
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to glob repo")
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListRepos: %s", err))
-	}
-	for _, ne := range repos {
-		// TODO seems like there should be a more foolproof way, but this works for now
-		spl := strings.Split(ne, "/")
-		r := Repo{
-			Name:    repo,
-			Version: spl[len(spl)-2 : len(spl)-1][0],
-		}
-
-		// p.Repos[r.Slug] = r
-
-		repoInfo = append(repoInfo, r)
-	}
-
-	return ctx.JSON(http.StatusOK, repoInfo)
+	return ctx.JSON(http.StatusOK, []Repo{repoInfo})
 }
 
-// DeleteRepo - delete a repo
-func (p *PkgRepoAPI) DeleteRepo(ctx echo.Context, slug string) error {
-	return ctx.NoContent(http.StatusNoContent)
-}
+// DeleteRepo - delete a repo TODO
+// func (p *PkgRepoAPI) DeleteRepo(ctx echo.Context, org, distro, version, repo string) error {
+// 	return ctx.NoContent(http.StatusNoContent)
+// }
 
 // GetHealthPing - return health status (for k8s)
 func (p *PkgRepoAPI) GetHealthPing(ctx echo.Context) error {
@@ -157,226 +101,95 @@ func (p *PkgRepoAPI) HeadHealthReady(ctx echo.Context) error {
 	return ctx.String(http.StatusOK, "ready")
 }
 
-// ListDistroVersions - return a list of distroversions
-func (p *PkgRepoAPI) ListDistroVersions(ctx echo.Context, distro string) error {
-	var d []DistroVersion
-
-	ents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, "atlascloud", filepath.Clean(distro)))
+// ListPackagesByRepo - list packages in an org's repo
+func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, distro, version, repo, arch string) error {
+	pkgs, err := listPackages(org, distro, version, repo, arch)
 	if err != nil {
-		sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("ListDistroVersions: %s", err))
-	}
-
-	for _, e := range ents {
-		log.Debug().Interface("e", e).Msg("range distros")
-		if e.IsDir() {
-			d = append(d, DistroVersion(e.Name()))
-		}
-	}
-
-	return ctx.JSON(http.StatusOK, d)
-}
-
-// func slugToPath(slug string) (string, error) {
-// 	// TODO see if path actually exists, etc
-// 	s := strings.SplitN(slug, "-", 2)
-// 	v := s[0]
-// 	r := s[1]
-
-// 	path := fmt.Sprintf("/%s/%s", v, r)
-
-// 	return path, nil
-// }
-
-func parseAPKFilename(filename string) (string, string, string) {
-	firstPart := filename[0:strings.LastIndex(filename, "-")]
-	name := firstPart[:strings.LastIndex(firstPart, "-")]
-	version := firstPart[strings.LastIndex(firstPart, "-")+1:]
-	release := strings.TrimSuffix(filename[strings.LastIndex(filename, "-")+2:], ".apk")
-
-	return name, version, release
-}
-
-// ListPackagesByRepo - asdf
-func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, repo, ver string) error {
-	// log.Debug().Str("slug", slug).Msg("ListPackagesByRepo")
-	var pkgs []Package
-
-	// pkgPath, err := slugToPath(slug)
-	// pkgPath := fmt.Sprintf("/%s/%s", ver, repo)
-
-	// if err != nil {
-	// 	sendRepoError(ctx, http.StatusInternalServerError, fmt.Sprintf("Invalid slug: %s", err))
-	// }
-
-	ents, err := os.ReadDir(filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), "/x86_64"))
-	if err != nil {
-		log.Error().Err(err).Msg("ListPackagesByRepo: ReadDir")
-		sendRepoError(ctx, http.StatusInternalServerError, "ListPackagesByRepo: ReadDir error")
-	}
-
-	for _, e := range ents {
-		// fmt.Println(e)
-		if !e.IsDir() && strings.HasSuffix(e.Name(), ".apk") {
-			// some example file names to deal with
-			// abuild-3.7.0_rc1-r0.apk
-			// shared-mime-info-lang-1.15-r0.apk
-			filename := e.Name()
-
-			name, version, release := parseAPKFilename(filename)
-
-			pkgs = append(pkgs, Package{
-				Name:    name,
-				Version: &version,
-				Release: &release,
-			})
-		}
+		return ctx.JSON(http.StatusInternalServerError, Error{Message: "failed to get package list"})
 	}
 
 	return ctx.JSON(http.StatusOK, pkgs)
 }
 
-// generateAPKIndex - (re)generate the APKINDEX file
-// this runs in the background because it can take quite a while
-// regenerate the APKINDEX
-// TODO make sure we don't run this unnecessarily
-func generateAPKIndex(pkgDir string) {
-	// generate the index and sign it all in the background so the user isn't waiting around
-	// for a possibly long running task
-	apks, err := filepath.Glob(filepath.Join(pkgDir, "*.apk"))
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to glob apks")
-	}
-	// c := exec.Command("/sbin/apk", "index", "-o", "APKINDEX.new.tar.gz", "-x", "APKINDEX.tar.gz", "-d", "atlascloud main edge")
-	args := []string{"index", "--no-warnings", "--rewrite-arch", "x86_64", "-o", "APKINDEX.new.tar.gz", "-d", "atlascloud main edge"}
-	args = append(args, apks...)
-	c := exec.Command("/sbin/apk", args...)
-
-	c.Dir = pkgDir
-	stderr, err := c.StderrPipe()
-	if err != nil {
-		log.Error().Err(err).Msg("error setting up stderr for apk index command")
-	}
-	stdout, err := c.StdoutPipe()
-	if err != nil {
-		log.Error().Err(err).Msg("error setting up stdout for apk index command")
-	}
-
-	err = c.Start()
-	if err != nil {
-		log.Error().Str("command", c.String()).Err(err).Msg("failed to run apk index")
-		return
-	}
-
-	se, err := io.ReadAll(stderr)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read stderr")
-	}
-	log.Warn().Bytes("stderr", se).Msg("apk index stderr")
-	so, err := io.ReadAll(stdout)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read stdout")
-	}
-	log.Warn().Bytes("stdout", so).Msg("apk index stdout")
-
-	keyFile := os.Getenv("KEY_FILE")
-	c = exec.Command("/usr/bin/abuild-sign", "-k", keyFile, "APKINDEX.new.tar.gz")
-	c.Dir = pkgDir
-	stderr, err = c.StderrPipe()
-	if err != nil {
-		log.Error().Err(err).Msg("error setting up stderr for abuild-sign command")
-	}
-	stdout, err = c.StdoutPipe()
-	if err != nil {
-		log.Error().Err(err).Msg("error setting up stdout for abuild-sign command")
-	}
-
-	err = c.Start()
-	if err != nil {
-		log.Error().Str("command", c.String()).Err(err).Msg("failed to run abuild-sign")
-		return
-	}
-	se, err = io.ReadAll(stderr)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read stderr")
-	}
-	log.Warn().Bytes("stderr", se).Msg("abuild-sign stderr")
-	so, err = io.ReadAll(stdout)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read stdout")
-	}
-	log.Warn().Bytes("stdout", so).Msg("abuild-sign stdout")
-
-	err = os.Rename(filepath.Join(pkgDir, "APKINDEX.new.tar.gz"), filepath.Join(pkgDir, "APKINDEX.tar.gz"))
-	if err != nil {
-		log.Error().Err(err).Msg("failed to rename apkindex file")
-	}
-
-}
-
 // CreatePackage - Create a package in a repo and regenerate the index
-func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, repo, ver string) error {
-	arch := filepath.Clean(ctx.FormValue("architecture"))
+func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arch string) error {
 	file, err := ctx.FormFile("package")
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to get file from submitted data")
 	}
-	pkgDir := filepath.Join(PackageBaseDirectory, filepath.Clean(org), "alpine", filepath.Clean(ver), filepath.Clean(repo), arch)
-	// log.Debug().
-	// 	Interface("ctx", ctx).
-	// 	Interface("arch", arch).
-	// 	Interface("file", file).
-	// 	Str("org", org).
-	// 	Str("repo", repo).
-	// 	Str("ver", ver).
-	// 	Msg("echo context")
-
 	src, err := file.Open()
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to open src file")
 	}
 	defer src.Close()
 
-	// Destination
-	dst, err := os.Create(filepath.Join(pkgDir, filepath.Clean(file.Filename)))
+	pkg, err := repository.ParsePackage(src)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed to create dst file")
+		log.Error().Err(err).Msg("failed to parse package from uploaded file")
+		return ctx.JSON(http.StatusInternalServerError, errors.New("failed to parse upload"))
 	}
-	defer dst.Close()
+	src.Close()
 
-	// Copy
-	if _, err = io.Copy(dst, src); err != nil {
-		log.Warn().Err(err).Msg("failed to copy file from src to dst")
-	}
+	writeUploadedPkg(file, org, distro, ver, repo, arch)
 
-	go generateAPKIndex(pkgDir)
+	go generateAPKIndex(org, distro, ver, repo, arch)
 
-	name, version, release := parseAPKFilename(file.Filename)
-
-	return ctx.JSON(http.StatusOK, &Package{Name: name, Version: &version, Release: &release})
+	return ctx.JSON(http.StatusOK, &Package{Name: pkg.Name, Version: &pkg.Version}) // TODO do we really pkgrel?
 }
 
 // ListDistros - return a list of the supported distros
-func (p *PkgRepoAPI) ListDistros(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, []Distribution{"alpine"})
+func (p *PkgRepoAPI) ListDistros(ctx echo.Context, org string) error {
+	distros, err := listDistros(org)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to listDistros")
+		return ctx.JSON(http.StatusInternalServerError, Error{Message: "failed to get a list of distros"})
+	}
+	return ctx.JSON(http.StatusOK, distros)
 }
 
-// ListOrganizations - return a list of the supported distros
+// ListOrganizations - return a list of the organizations
+// TODO this should probably only be available to the server tokens
 func (p *PkgRepoAPI) ListOrganizations(ctx echo.Context) error {
 	orgs := listOrgs()
-	var ret []Organization
-	for i := range orgs {
-		ret = append(ret, Organization{Name: &orgs[i]})
-	}
-	return ctx.JSON(http.StatusOK, ret)
+	return ctx.JSON(http.StatusOK, orgs)
 }
 
 // GetOrganization - get an org
 func (p *PkgRepoAPI) GetOrganization(ctx echo.Context, org string) error {
-	var orgName = "atlascloud"
-	return ctx.JSON(http.StatusOK, &Organization{Name: &orgName})
+	ret := &Organization{}
+	if orgExists(org) {
+		// distros, err := listRepos(org, distro)
+		ret = &Organization{
+			Name:          &org,
+			Distributions: nil,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, ret)
 }
 
 // ListVersions - list of versions in an org's repo
-func (p *PkgRepoAPI) ListVersions(ctx echo.Context, org, repo string) error {
-	return ctx.JSON(http.StatusOK, DistroVersion("3.12"))
+func (p *PkgRepoAPI) ListVersions(ctx echo.Context, org, distro string) error {
+	dvs, err := listVersions(org, distro)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{Message: "failed to list distro versions"})
+	}
+	return ctx.JSON(http.StatusOK, dvs)
+}
+
+// GetOrgDistro - Return info about a distribution for an org
+func (p *PkgRepoAPI) GetOrgDistro(ctx echo.Context, org, distro string) error {
+	log.Debug().Str("org", org).Str("distro", distro).Msg("GetOrgDistro")
+	return ctx.JSON(http.StatusOK, []Distribution{})
+}
+
+// ListArches - list architectures for org/distro/version/repo
+func (p *PkgRepoAPI) ListArches(ctx echo.Context, org, distro, version, repo string) error {
+	arches, err := listArches(org, distro, version, repo)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, Error{Message: "failed to get arch list"})
+	}
+
+	return ctx.JSON(http.StatusOK, arches)
+
 }

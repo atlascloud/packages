@@ -4,23 +4,22 @@
 
 host packages for distributions
 
-## Notes
-
-Currently we call out to apk, so you either need to run this in an alpine container/host or have a
-standalone apk binary in your path
-
 ## Functionality
+
 ### Implemented
 
+* organizations
+  * support for multiple orgs per server
+  * organization level tokens
 * distributions
   * get info
   * get versions
   * NOTE: only alpine is currently supported
-* organizations
-  * support for multiple orgs per server
-  * organization level tokens
-* repos
-  * support for multiple repos per org
+* repository versions
+* repositories
+  * support for multiple repos per distribution/version
+* architectures
+* packages
 
 
 ### Planned
@@ -34,5 +33,72 @@ standalone apk binary in your path
 * aliases
   * version aliases
     * 10.0 -> buster
-    * 20.04 -> bionic
-  *
+    * 20.04 -> focal
+
+## directory layout
+
+### conceptual
+* root
+  * static
+    * orgs
+      * distros - public keys
+        * distroversion
+          * repos
+            * packages (.apk/.deb/.rpm/etc)
+  * config
+    * orgs - pkg/repo signing private keys / tokens
+      * tokens - org level tokens
+      * distros - pkg/repo signing private keys / tokens
+        * distroversion - pkg/repo signing private keys / tokens
+          * repos - pkg/repo signing private keys / tokens
+
+### examples
+* /srv/packages
+  * /static
+    * /atlascloud
+      * /alpine
+        * /somekey.pub
+        * /edge
+          * /key.pub
+          * /main
+          * /community
+        * /3.19
+          * /main
+      * /ubuntu
+        * /repokey.pub
+        * /dists
+          * /24.04 -> noble
+            * /main
+            * /universe
+            * /multiverse
+            * /restricted
+        * /pool
+          * /main
+            * /a,/b,/c... - debs
+          * /multiverse
+            * /a,/b,/c...
+      * /fedora
+        * /linux
+          * /releases
+            * /39
+              * /Server
+                * x86_64
+                  * /os
+                    * /Packages
+                      * /a,/b,/c - rpms
+  * /config
+    * /atlascloud
+      * /tokens
+      * /alpine
+        * /privkey.key
+        * /tokens
+          * /name
+          * /2
+        * /edge
+          * /privkey.key
+          * /main
+            * /priv.key
+
+### TODO
+* server wide tokens for doing things like creating orgs, etc
+

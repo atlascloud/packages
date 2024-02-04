@@ -10,13 +10,14 @@ COPY ./go.* /app/
 RUN ["go", "mod", "download"]
 
 COPY ./ /app/
-RUN ["go", "build", "./cmd/api"]
+ENV CGO_ENABLED=0
+RUN ["go", "build", "-ldflags='-extldflags=-static'", "./cmd/api/"]
 # RUN ["find", "."]
 
 # we need edge because we built packages for edge
 FROM alpine:edge
 
-LABEL maintainer="iggy@atlascloud.xyz"
+LABEL maintainer="packages@atlascloud.xyz"
 LABEL org.opencontainers.image.source=https://github.com/atlascloud/packages
 LABEL org.opencontainers.image.description="API for managing packages service"
 

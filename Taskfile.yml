@@ -20,6 +20,8 @@ tasks:
       # -o /local/gen/packages
 
   build:
+    env:
+      CGO_ENABLED: 0
     cmds:
       - go build ./cmd/api
 
