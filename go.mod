@@ -9,7 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/echo-middleware v1.0.1
 	github.com/pkg/xattr v0.4.9
-	github.com/rs/zerolog v1.31.0
+	github.com/rs/zerolog v1.32.0
 	github.com/steinfletcher/apitest v1.5.15
 )
 
