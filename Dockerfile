@@ -11,7 +11,7 @@ RUN ["go", "mod", "download"]
 
 COPY ./ /app/
 ENV CGO_ENABLED=0
-RUN ["go", "build", "-ldflags='-extldflags=-static'", "./cmd/api/"]
+RUN ["go", "build", "-ldflags=\"-extldflags=-static\"", "./cmd/api/"]
 # RUN ["find", "."]
 
 # we need edge because we built packages for edge
