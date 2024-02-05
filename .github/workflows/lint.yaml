@@ -44,7 +44,9 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_LINTERS: SPELL_CSPELL
-          DISABLE_ERRORS_LINTERS: SPELL_LYCHEE
+          # lychee checks a bunch of URLs and other stuff that it really shouldn't be
+          # secretlint fails randomly on some files that megalinter generates
+          DISABLE_ERRORS_LINTERS: SPELL_LYCHEE,REPOSITORY_SECRETLINT
           GO_GOLANGCI_LINT_CLI_LINT_MODE: project
           GO_REVIVE_CLI_LINT_MODE: project
           REPOSITORY_GRYPE_DISABLE_ERRORS: true
