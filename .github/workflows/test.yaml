@@ -17,5 +17,5 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: arduino/setup-task@v1
+      - uses: arduino/setup-task@v2
       - run: task test
