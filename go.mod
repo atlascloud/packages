@@ -1,6 +1,6 @@
 module github.com/iggy/packages
 
-go 1.20
+go 1.21
 
 // replace gitlab.alpinelinux.org/alpine/go => /home/iggy/projects/gitlab.alpinelinux.org/iggy/go
 
