@@ -91,8 +91,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
-github.com/viant/afs v1.25.0 h1:5N/gGht4clZck42MBcCkzWTmENfG1xGnoMJ4sfXTrhI=
-github.com/viant/afs v1.25.0/go.mod h1:bo/jkTH8sBUhG0PQcPsuskvjb/5uEzgiwygGwtaDw8Q=
+github.com/viant/afs v1.25.1 h1:IPcqwzsPUaWqsSkQXoM1vXwQuRI6u7ZgqQHKQZ8Wxyg=
+github.com/viant/afs v1.25.1/go.mod h1:rScbFd9LJPGTM8HOI8Kjwee0AZ+MZMupAvFpPg+Qdj4=
 gitlab.alpinelinux.org/alpine/go v0.10.0 h1:/ekBiNqDSXZpK+AfZx4lrtVwKTDrWz3N3ck0S+fCxwU=
 gitlab.alpinelinux.org/alpine/go v0.10.0/go.mod h1:LKzOqYjGTZNLwcHl+c2I5VNioQio7agzRFvlGB9Owk4=
 golang.org/x/crypto v0.21.0 h1:X31++rzVUdKhX5sWmSOFZxx8UW/ldWx55cbf08iNAMA=

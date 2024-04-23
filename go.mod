@@ -11,7 +11,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/rs/zerolog v1.32.0
-	github.com/viant/afs v1.25.0
+	github.com/viant/afs v1.25.1
 	gitlab.alpinelinux.org/alpine/go v0.10.0
 )
 
