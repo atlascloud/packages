@@ -14,11 +14,13 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/oapi-codegen/echo-middleware"
+	echomiddleware "github.com/oapi-codegen/echo-middleware"
 )
 
 func main() {
 	var port = flag.Int("port", 8888, "Port for HTTP server")
+	var dir = flag.String("dir", "/srv/packages", "Root directory for packages/config")
+
 	flag.Parse()
 
 	swagger, err := repoApi.GetSwagger()
@@ -32,7 +34,7 @@ func main() {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	papi := repoApi.NewPkgRepo()
+	papi := repoApi.NewPkgRepo(*dir)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
@@ -53,7 +55,9 @@ func main() {
 	validatorOptions.Options.AuthenticationFunc = func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		orgName := input.RequestValidationInput.PathParams["org"]
 		validTokens := repoApi.GetValidTokens(orgName)
-		if input.RequestValidationInput.Request.Header.Get("Authorization") == "" {
+		// they probably forgot to set the auth header or the env var for the token
+		if input.RequestValidationInput.Request.Header.Get("Authorization") == "" ||
+			input.RequestValidationInput.Request.Header["Authorization"][0] == "Bearer" {
 			return errors.New("no auth token")
 		}
 		token := strings.Split(input.RequestValidationInput.Request.Header["Authorization"][0], " ")[1]

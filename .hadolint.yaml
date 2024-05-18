@@ -5,3 +5,4 @@ ignored:
   # specific version is just a recipe for having to constantly update
   # the versions in your Dockerfile
   - DL3018
+  - DL3059

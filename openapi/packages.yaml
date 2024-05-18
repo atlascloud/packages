@@ -307,7 +307,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
   /{org}/{distro}/{version}/{repo}/{arch}/pkgs:
     parameters:
       - name: org
@@ -388,9 +387,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /{org}/{distro}/{version}/{repo}/{arch}/index:
+    parameters:
+      - name: org
+        in: path
+        description: the name of the organization
+        required: true
+        schema:
+          type: string
+      - name: distro
+        in: path
+        description: the name of the distribution
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        description: version of repo to look for packages
+        required: true
+        schema:
+          type: string
+      - name: repo
+        in: path
+        description: name of repo to look for packages
+        required: true
+        schema:
+          type: string
+      - name: arch
+        in: path
+        description: arch of repo to look for packages
+        required: true
+        schema:
+          type: string
+    post:
+      description: Create a package index in a repo
+      operationId: CreatePackageIndex
+      responses:
+        "200":
+          description: package index response
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: "#/components/schemas/GenerateIndex"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   # try to get the LCD of everything... probably poorly
-  # /o/{org}/p/{package_type}/r/{repotype}/v/{version}/
+  # /{org}/{distro}/{version}/{repo}/{arch}/
   # package_type = debian/alpine/npm/maven/etc
   # repo_type = community/testing/main/
   # repo version = stable/buster/3.14/latest/beta
@@ -526,3 +575,11 @@ components:
         description:
           type: string
           description: Description of the repo - not functional - just for ease of use
+    GenerateIndex:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: boolean
+          description: package index success status
