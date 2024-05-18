@@ -38,6 +38,12 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// GenerateIndex defines model for GenerateIndex.
+type GenerateIndex struct {
+	// Status package index success status
+	Status bool `json:"status"`
+}
+
 // NewRepo defines model for NewRepo.
 type NewRepo struct {
 	// Description Description of the repo to add - not functional - just for ease of use
@@ -201,6 +207,9 @@ type ClientInterface interface {
 	// ListArches request
 	ListArches(ctx context.Context, org string, distro string, version string, repo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreatePackageIndex request
+	CreatePackageIndex(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPackagesByRepo request
 	ListPackagesByRepo(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -354,6 +363,18 @@ func (c *Client) FindRepoByName(ctx context.Context, org string, distro string, 
 
 func (c *Client) ListArches(ctx context.Context, org string, distro string, version string, repo string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListArchesRequest(c.Server, org, distro, version, repo)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePackageIndex(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePackageIndexRequest(c.Server, org, distro, version, repo, arch)
 	if err != nil {
 		return nil, err
 	}
@@ -851,6 +872,68 @@ func NewListArchesRequest(server string, org string, distro string, version stri
 	return req, nil
 }
 
+// NewCreatePackageIndexRequest generates requests for CreatePackageIndex
+func NewCreatePackageIndexRequest(server string, org string, distro string, version string, repo string, arch string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "org", runtime.ParamLocationPath, org)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "distro", runtime.ParamLocationPath, distro)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "version", runtime.ParamLocationPath, version)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam3 string
+
+	pathParam3, err = runtime.StyleParamWithLocation("simple", false, "repo", runtime.ParamLocationPath, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam4 string
+
+	pathParam4, err = runtime.StyleParamWithLocation("simple", false, "arch", runtime.ParamLocationPath, arch)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/%s/%s/%s/%s/%s/index", pathParam0, pathParam1, pathParam2, pathParam3, pathParam4)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListPackagesByRepoRequest generates requests for ListPackagesByRepo
 func NewListPackagesByRepoRequest(server string, org string, distro string, version string, repo string, arch string) (*http.Request, error) {
 	var err error
@@ -1057,6 +1140,9 @@ type ClientWithResponsesInterface interface {
 
 	// ListArchesWithResponse request
 	ListArchesWithResponse(ctx context.Context, org string, distro string, version string, repo string, reqEditors ...RequestEditorFn) (*ListArchesResponse, error)
+
+	// CreatePackageIndexWithResponse request
+	CreatePackageIndexWithResponse(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*CreatePackageIndexResponse, error)
 
 	// ListPackagesByRepoWithResponse request
 	ListPackagesByRepoWithResponse(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*ListPackagesByRepoResponse, error)
@@ -1334,6 +1420,29 @@ func (r ListArchesResponse) StatusCode() int {
 	return 0
 }
 
+type CreatePackageIndexResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]interface{}
+	JSONDefault  *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePackageIndexResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePackageIndexResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListPackagesByRepoResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1494,6 +1603,15 @@ func (c *ClientWithResponses) ListArchesWithResponse(ctx context.Context, org st
 		return nil, err
 	}
 	return ParseListArchesResponse(rsp)
+}
+
+// CreatePackageIndexWithResponse request returning *CreatePackageIndexResponse
+func (c *ClientWithResponses) CreatePackageIndexWithResponse(ctx context.Context, org string, distro string, version string, repo string, arch string, reqEditors ...RequestEditorFn) (*CreatePackageIndexResponse, error) {
+	rsp, err := c.CreatePackageIndex(ctx, org, distro, version, repo, arch, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePackageIndexResponse(rsp)
 }
 
 // ListPackagesByRepoWithResponse request returning *ListPackagesByRepoResponse
@@ -1852,6 +1970,39 @@ func ParseListArchesResponse(rsp *http.Response) (*ListArchesResponse, error) {
 	return response, nil
 }
 
+// ParseCreatePackageIndexResponse parses an HTTP response from a CreatePackageIndexWithResponse call
+func ParseCreatePackageIndexResponse(rsp *http.Response) (*CreatePackageIndexResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePackageIndexResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListPackagesByRepoResponse parses an HTTP response from a ListPackagesByRepoWithResponse call
 func ParseListPackagesByRepoResponse(rsp *http.Response) (*ListPackagesByRepoResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -1956,6 +2107,9 @@ type ServerInterface interface {
 
 	// (GET /{org}/{distro}/{version}/{repo}/architectures)
 	ListArches(ctx echo.Context, org string, distro string, version string, repo string) error
+
+	// (POST /{org}/{distro}/{version}/{repo}/{arch}/index)
+	CreatePackageIndex(ctx echo.Context, org string, distro string, version string, repo string, arch string) error
 
 	// (GET /{org}/{distro}/{version}/{repo}/{arch}/pkgs)
 	ListPackagesByRepo(ctx echo.Context, org string, distro string, version string, repo string, arch string) error
@@ -2229,6 +2383,56 @@ func (w *ServerInterfaceWrapper) ListArches(ctx echo.Context) error {
 	return err
 }
 
+// CreatePackageIndex converts echo context to params.
+func (w *ServerInterfaceWrapper) CreatePackageIndex(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "org" -------------
+	var org string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "org", runtime.ParamLocationPath, ctx.Param("org"), &org)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter org: %s", err))
+	}
+
+	// ------------- Path parameter "distro" -------------
+	var distro string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "distro", runtime.ParamLocationPath, ctx.Param("distro"), &distro)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter distro: %s", err))
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "version", runtime.ParamLocationPath, ctx.Param("version"), &version)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter version: %s", err))
+	}
+
+	// ------------- Path parameter "repo" -------------
+	var repo string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "repo", runtime.ParamLocationPath, ctx.Param("repo"), &repo)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter repo: %s", err))
+	}
+
+	// ------------- Path parameter "arch" -------------
+	var arch string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "arch", runtime.ParamLocationPath, ctx.Param("arch"), &arch)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter arch: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreatePackageIndex(ctx, org, distro, version, repo, arch)
+	return err
+}
+
 // ListPackagesByRepo converts echo context to params.
 func (w *ServerInterfaceWrapper) ListPackagesByRepo(ctx echo.Context) error {
 	var err error
@@ -2369,6 +2573,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/:org/:distro/:version/repos", wrapper.ListRepos)
 	router.GET(baseURL+"/:org/:distro/:version/:repo", wrapper.FindRepoByName)
 	router.GET(baseURL+"/:org/:distro/:version/:repo/architectures", wrapper.ListArches)
+	router.POST(baseURL+"/:org/:distro/:version/:repo/:arch/index", wrapper.CreatePackageIndex)
 	router.GET(baseURL+"/:org/:distro/:version/:repo/:arch/pkgs", wrapper.ListPackagesByRepo)
 	router.POST(baseURL+"/:org/:distro/:version/:repo/:arch/pkgs", wrapper.CreatePackage)
 
@@ -2377,30 +2582,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"AAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -287,7 +287,7 @@ func generateAPKIndex(org, distro, version, repo, arch string) {
 	}
 
 	walkerF := func(ctx context.Context, baseURL string, parent string, info os.FileInfo, reader io.Reader) (toContinue bool, err error) {
-		// log.Debug().Str("baseurl", baseURL).Str("parent", parent).Msg("generateAPKIndex: walker")
+		log.Trace().Str("baseurl", baseURL).Str("filename", info.Name()).Str("parent", parent).Msg("generateAPKIndex: walker")
 		if strings.HasSuffix(info.Name(), ".apk") {
 			if parent == "" {
 				// if parent is set that means we've recursed
@@ -359,4 +359,5 @@ func generateAPKIndex(org, distro, version, repo, arch string) {
 	if err != nil || c == 0 {
 		log.Error().Err(err).Int("count", c).Msg("failed to write signed archive")
 	}
+	log.Trace().Msg("finished generating apk index")
 }

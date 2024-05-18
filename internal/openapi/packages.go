@@ -14,19 +14,24 @@ import (
 //  * Check if org/arch/repo/etc are in known
 //  * Beef up path traversal protection
 
-// PackageBaseDirectory - the base directory where packages are organized/stored
-var PackageBaseDirectory = "file:///srv/packages/"
+// TODO this is a transitional var, need to move everything to use pkgrepoapi.packagebasedir
+var PackageBaseDirectory string
 
 // PkgRepoAPI - a collection packages, repos, versions, etc
 type PkgRepoAPI struct {
 	Repos map[string]Repo
+	// PackageBaseDirectory - the base directory where packages are organized/stored
+	PackageBaseDirectory string
 }
 
 // NewPkgRepo - called by main function to
-func NewPkgRepo() *PkgRepoAPI {
+func NewPkgRepo(dir string) *PkgRepoAPI {
 	p := &PkgRepoAPI{
 		Repos: make(map[string]Repo),
 	}
+	// PackageBaseDirectory - the base directory where packages are organized/stored
+	p.PackageBaseDirectory = "file://" + dir
+	PackageBaseDirectory = "file://" + dir
 
 	return p
 }
@@ -132,9 +137,19 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arc
 
 	writeUploadedPkg(file, org, distro, ver, repo, arch)
 
-	go generateAPKIndex(org, distro, ver, repo, arch)
+	// go generateAPKIndex(org, distro, ver, repo, arch)
 
 	return ctx.JSON(http.StatusOK, &Package{Name: pkg.Name, Version: &pkg.Version}) // TODO do we really pkgrel?
+}
+
+// CreatePackageIndex - regenerate the index for a repo
+func (p *PkgRepoAPI) CreatePackageIndex(ctx echo.Context, org, distro, ver, repo, arch string) error {
+	// generateAPKIndex is meant to be run in a goroutine, so we don't actually get any return from the function
+	// for now, just blindly return true, but we should tidy this up later
+	generateAPKIndex(org, distro, ver, repo, arch)
+
+	status := &GenerateIndex{Status: true}
+	return ctx.JSON(http.StatusOK, status)
 }
 
 // ListDistros - return a list of the supported distros
