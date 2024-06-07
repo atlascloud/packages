@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -275,7 +276,7 @@ func writeUploadedPkg(f *multipart.FileHeader, org, distro, version, repo, arch 
 func generateAPKIndex(org, distro, version, repo, arch string) {
 	log.Debug().Msg("generating APK index")
 	var apki repository.ApkIndex
-	apki.Description = "atlascloud main edge"
+	apki.Description = fmt.Sprintf("%s %s %s", org, repo, version)
 
 	ctx := context.Background()
 	configURI := url.JoinUNC(PackageBaseDirectory, "config", org, distro)
@@ -295,6 +296,8 @@ func generateAPKIndex(org, distro, version, repo, arch string) {
 				if err != nil {
 					log.Error().Err(err).Msg("generateAPKIndex: failed to parse package")
 				}
+				// we need to rewrite the arch because noarch packages don't install right
+				pkg.Arch = arch
 				apki.Packages = append(apki.Packages, pkg)
 			}
 		}
