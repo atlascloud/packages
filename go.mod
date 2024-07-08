@@ -12,7 +12,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/rs/zerolog v1.33.0
 	github.com/viant/afs v1.25.1
-	gitlab.alpinelinux.org/alpine/go v0.10.0
+	gitlab.alpinelinux.org/alpine/go v0.10.1
 )
 
 require (

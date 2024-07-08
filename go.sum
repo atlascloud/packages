@@ -93,8 +93,8 @@ github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQ
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/viant/afs v1.25.1 h1:IPcqwzsPUaWqsSkQXoM1vXwQuRI6u7ZgqQHKQZ8Wxyg=
 github.com/viant/afs v1.25.1/go.mod h1:rScbFd9LJPGTM8HOI8Kjwee0AZ+MZMupAvFpPg+Qdj4=
-gitlab.alpinelinux.org/alpine/go v0.10.0 h1:/ekBiNqDSXZpK+AfZx4lrtVwKTDrWz3N3ck0S+fCxwU=
-gitlab.alpinelinux.org/alpine/go v0.10.0/go.mod h1:LKzOqYjGTZNLwcHl+c2I5VNioQio7agzRFvlGB9Owk4=
+gitlab.alpinelinux.org/alpine/go v0.10.1 h1:QoidnfDyC9yeIMj+CvYVyjlroZD/Kl7JRXGEQBvY5XM=
+gitlab.alpinelinux.org/alpine/go v0.10.1/go.mod h1:zwds+1zTmPDgwf/9lOzzn+oZVBr6jyfVgH3zuwkfkzc=
 golang.org/x/crypto v0.23.0 h1:dIJU/v2J8Mdglj/8rJ6UUOM3Zc9zLZxVZwwxMooUSAI=
 golang.org/x/crypto v0.23.0/go.mod h1:CKFgDieR+mRhux2Lsu27y0fO304Db0wZe70UKqHu0v8=
 golang.org/x/net v0.25.0 h1:d/OCCoBEUq33pjydKrGQhw7IlUPI2Oylr+8qLx49kac=
