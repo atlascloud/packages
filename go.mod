@@ -5,7 +5,7 @@ go 1.21
 // replace gitlab.alpinelinux.org/alpine/go => /home/iggy/projects/gitlab.alpinelinux.org/iggy/go
 
 require (
-	github.com/getkin/kin-openapi v0.126.0
+	github.com/getkin/kin-openapi v0.128.0
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
