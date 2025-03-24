@@ -10,7 +10,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/viant/afs v1.25.1
 	gitlab.alpinelinux.org/alpine/go v0.10.1
 )
