@@ -39,7 +39,7 @@ jobs:
 
       - name: Mega Linter
         id: ml
-        uses: megalinter/megalinter/flavors/go@v8.4.2
+        uses: megalinter/megalinter/flavors/go@v8.5.0
         env:
           # Validates all source when push on main, else just the git diff with main. Override
           # with true if you always want to lint all sources
