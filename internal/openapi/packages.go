@@ -118,6 +118,7 @@ func (p *PkgRepoAPI) ListPackagesByRepo(ctx echo.Context, org, distro, version, 
 
 // CreatePackage - Create a package in a repo and regenerate the index
 func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arch string) error {
+	log.Trace().Msg("CreatePackage")
 	file, err := ctx.FormFile("package")
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to get file from submitted data")
@@ -126,27 +127,36 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arc
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to open src file")
 	}
-	defer src.Close()
+	defer func() {
+		err := src.Close()
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to close src file")
+		}
+	}()
 
 	pkg, err := repository.ParsePackage(src)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse package from uploaded file")
 		return ctx.JSON(http.StatusInternalServerError, errors.New("failed to parse upload"))
 	}
-	src.Close()
+	err = src.Close()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to close src file")
+	}
 
+	log.Trace().Msg("writing uploaded file")
 	writeUploadedPkg(file, org, distro, ver, repo, arch)
 
 	// go generateAPKIndex(org, distro, ver, repo, arch)
 
-	return ctx.JSON(http.StatusOK, &Package{Name: pkg.Name, Version: &pkg.Version}) // TODO do we really pkgrel?
+	return ctx.JSON(http.StatusOK, &Package{Name: pkg.Name, Version: &pkg.Version})
 }
 
 // CreatePackageIndex - regenerate the index for a repo
 func (p *PkgRepoAPI) CreatePackageIndex(ctx echo.Context, org, distro, ver, repo, arch string) error {
 	// generateAPKIndex is meant to be run in a goroutine, so we don't actually get any return from the function
 	// for now, just blindly return true, but we should tidy this up later
-	generateAPKIndex(org, distro, ver, repo, arch)
+	GenerateAPKIndex(PackageBaseDirectory, org, distro, ver, repo, arch)
 
 	status := &GenerateIndex{Status: true}
 	return ctx.JSON(http.StatusOK, status)

@@ -269,20 +269,20 @@ func writeUploadedPkg(f *multipart.FileHeader, org, distro, version, repo, arch 
 	}
 }
 
-// generateAPKIndex - (re)generate the APKINDEX file
+// GenerateAPKIndex - (re)generate the APKINDEX file
 // this runs in the background because it can take quite a while
 // regenerate the APKINDEX
 // TODO make sure we don't run this unnecessarily
-func generateAPKIndex(org, distro, version, repo, arch string) {
+func GenerateAPKIndex(basedir, org, distro, version, repo, arch string) {
 	log.Debug().Msg("generating APK index")
 	var apki repository.ApkIndex
 	apki.Description = fmt.Sprintf("%s %s %s", org, repo, version)
 
 	ctx := context.Background()
-	configURI := url.JoinUNC(PackageBaseDirectory, "config", org, distro)
-	staticURI := url.JoinUNC(PackageBaseDirectory, "static", org, distro, version, repo, arch)
+	configURI := url.JoinUNC(basedir, "config", org, distro)
+	staticURI := url.JoinUNC(basedir, "static", org, distro, version, repo, arch)
 	cfs := afs.New()
-	err := cfs.Init(ctx, PackageBaseDirectory)
+	err := cfs.Init(ctx, basedir)
 	if err != nil {
 		log.Fatal().Err(err).Msg("generateAPKIndex: failed to init cfs")
 	}

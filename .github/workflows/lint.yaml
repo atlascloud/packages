@@ -1,7 +1,6 @@
 ---
 name: Linters
 "on":
-  push:
   pull_request:
     branches:
       - master
@@ -34,12 +33,14 @@ jobs:
         with:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
       - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
       # this catches some errors that cause megalinter to fail with a rather unuseful error
       - run: go build ./...
 
       - name: Mega Linter
         id: ml
-        uses: megalinter/megalinter/flavors/go@v8.4.2
+        uses: megalinter/megalinter/flavors/go@v8.5.0
         env:
           # Validates all source when push on main, else just the git diff with main. Override
           # with true if you always want to lint all sources
@@ -49,11 +50,12 @@ jobs:
           DISABLE_LINTERS: SPELL_CSPELL
           # lychee checks a bunch of URLs and other stuff that it really shouldn't be
           # secretlint fails randomly on some files that megalinter generates
-          DISABLE_ERRORS_LINTERS: SPELL_LYCHEE,REPOSITORY_SECRETLINT
+          DISABLE_ERRORS_LINTERS: REPOSITORY_SECRETLINT
           GO_GOLANGCI_LINT_CLI_LINT_MODE: project
           GO_REVIVE_CLI_LINT_MODE: project
           REPOSITORY_GRYPE_DISABLE_ERRORS: true
           GO_GOLANGCI_LINT_ARGUMENTS: "--verbose --timeout 5m ./..."
+          SPELL_LYCHEE_ARGUMENTS: "--offline"
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
