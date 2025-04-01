@@ -1,4 +1,3 @@
-./api
 APKINDEX*
 *.apk
 .task
@@ -18,4 +17,8 @@ APKINDEX*
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# binaries
 ./api
+./cli
+./cmd/api/api

@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
-	repoApi "github.com/iggy/packages/internal/openapi"
+	repoApi "github.com/atlascloud/packages/internal/openapi"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echomiddleware "github.com/oapi-codegen/echo-middleware"
+	"golang.org/x/net/http2"
 )
 
 func main() {
@@ -38,6 +40,7 @@ func main() {
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
+	e.HideBanner = true
 	// Enable metrics middleware
 	p := prometheus.NewPrometheus("packages", nil)
 	p.Use(e)
@@ -78,5 +81,11 @@ func main() {
 	repoApi.RegisterHandlers(e, papi)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))
+	listenAddr := fmt.Sprintf("0.0.0.0:%d", *port)
+	srvr := &http2.Server{
+		MaxConcurrentStreams: 250,
+		MaxReadFrameSize:     500 * 1048576,
+		IdleTimeout:          120 * time.Second,
+	}
+	e.Logger.Fatal(e.StartH2CServer(listenAddr, srvr))
 }
