@@ -9,7 +9,7 @@ toolchain go1.24.1
 // replace gitlab.alpinelinux.org/alpine/go => /home/iggy/projects/gitlab.alpinelinux.org/iggy/go
 
 require (
-	github.com/getkin/kin-openapi v0.131.0
+	github.com/getkin/kin-openapi v0.132.0
 	github.com/labstack/echo-contrib v0.17.3
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/oapi-codegen/echo-middleware v1.0.2
