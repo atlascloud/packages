@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/viant/afs v1.26.2
 	gitlab.alpinelinux.org/alpine/go v0.10.1
-	golang.org/x/net v0.39.0
+	golang.org/x/net v0.40.0
 )
 
 require (
@@ -52,9 +52,9 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
