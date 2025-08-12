@@ -13,7 +13,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: arduino/setup-task@v2
       - uses: docker/login-action@v3
         with:
