@@ -16,7 +16,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
-	github.com/viant/afs v1.26.2
+	github.com/viant/afs v1.26.3
 	gitlab.alpinelinux.org/alpine/go v0.10.1
 	golang.org/x/net v0.43.0
 )
