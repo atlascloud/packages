@@ -22,3 +22,4 @@ APKINDEX*
 ./api
 ./cli
 ./cmd/api/api
+megalinter-reports/

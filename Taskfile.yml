@@ -1,8 +1,12 @@
 ---
 version: "3"
 
+vars:
+  CNTRCTL:
+    sh: which docker || which nerdctl
+
 tasks:
-  # go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+  # go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
   generate-openapi:
     sources:
       - openapi/packages.yaml
@@ -10,7 +14,7 @@ tasks:
       - internal/openapi/api.gen.go
     cmds:
       - mkdir -p internal/openapi
-      - oapi-codegen -package api -o internal/openapi/api.gen.go openapi/packages.yaml
+      - go tool oapi-codegen -package api -o internal/openapi/api.gen.go openapi/packages.yaml
       #- oapi-codegen -generate types -package api -o internal/openapi/types.gen.go openapi/packages.yaml
       #- oapi-codegen -generate client -package api -o internal/openapi/client.gen.go openapi/packages.yaml
       #- oapi-codegen -generate server -package api -o internal/openapi/server.gen.go openapi/packages.yaml
@@ -23,7 +27,8 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build ./cmd/api
+      - go build -ldflags="-extldflags=-static -w -s" ./cmd/api
+      - go build -ldflags="-extldflags=-static -w -s" ./cmd/cli
 
   test:
     cmds:
@@ -35,14 +40,17 @@ tasks:
     deps: [generate-openapi]
     cmds:
       - |
-        docker build \
-          --pull \
+        {{- .CNTRCTL }} build \
           -f Dockerfile \
           --tag ghcr.io/atlascloud/packages:latest \
           --tag ghcr.io/atlascloud/packages:$GITHUB_SHA \
           --tag ghcr.io/atlascloud/packages:$GITHUB_REF \
-          --cache-from ghcr.io/atlascloud/packages:latest .
-      - docker push ghcr.io/atlascloud/packages --all-tags
+          .
+      #    --cache-from ghcr.io/atlascloud/packages:latest .
+      # nerdctl doesn't have --pull
+      #          --pull \
+      # - docker push ghcr.io/atlascloud/packages --all-tags
+
 
   # push with just the sha tagged (no latest or version)
   # this gets run on every push
@@ -50,17 +58,22 @@ tasks:
   # case I decide to split these docker steps into separate file(s)
   docker:push-sha:
     cmds:
-      - docker build --pull -f Dockerfile --tag ghcr.io/atlascloud/packages:$GITHUB_SHA --cache-from ghcr.io/atlascloud/packages:latest .
-      - docker push ghcr.io/atlascloud/packages:$GITHUB_SHA
+      - |
+        {{- .CNTRCTL }} build --pull -f Dockerfile --tag ghcr.io/atlascloud/packages:$GITHUB_SHA --cache-from ghcr.io/atlascloud/packages:latest .
+      - |
+        {{- .CNTRCTL }} push ghcr.io/atlascloud/packages:$GITHUB_SHA
 
   docker:build:
     deps: [generate-openapi]
     cmds:
-      - docker build -f Dockerfile.local -t packages .
+      # this extra line is needed for some weird task reason /shrug
+      - |
+        {{- .CNTRCTL }} build -f Dockerfile.local -t packages .
 
   docker:run:
     deps: [docker:build]
     cmds:
       # 8008 is a special port on chromebooks
       # https://www.reddit.com/r/Crostini/wiki/index/well-known-ports
-      - docker run -it --rm -v $(pwd):/app -v /srv/packages:/srv/packages -p 8888:8888 packages
+      - |
+        {{- .CNTRCTL }} run -it --rm -v $(pwd):/app -v /srv/packages:/srv/packages -p 8888:8888 packages
