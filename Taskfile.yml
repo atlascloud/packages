@@ -51,7 +51,6 @@ tasks:
       #          --pull \
       # - docker push ghcr.io/atlascloud/packages --all-tags
 
-
   # push with just the sha tagged (no latest or version)
   # this gets run on every push
   # this has a soft dep on the build step, but I don't want to set it here in
