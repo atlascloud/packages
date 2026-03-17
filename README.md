@@ -100,5 +100,6 @@ host packages for distributions
             * /priv.key
 
 ### TODO
+* add top-level main.go with generate command ?
 * server wide tokens for doing things like creating orgs, etc
 

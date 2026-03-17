@@ -19,10 +19,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package main
+package cmd
 
-import "github.com/atlascloud/packages/cmd/cli/cmd"
+import (
+	"fmt"
+	"os"
+	"path"
 
-func main() {
-	cmd.Execute()
+	"github.com/rs/zerolog/log"
+	"gitlab.alpinelinux.org/alpine/go/apkbuild"
+)
+
+func getApkNameFromApkBuild(apkBuildPath string) (string, error) {
+	// get info from the APKBUILD to check against what the API says already exists
+	fp, err := os.Open(apkBuildPath)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to open apkbuild file")
+	}
+	abf := apkbuild.ApkbuildFile{
+		PackageName: path.Base(path.Dir(apkBuildPath)),
+		Content:     fp,
+	}
+	parsed, err := apkbuild.Parse(abf, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse apkbuild file")
+	}
+
+	apkFilename := fmt.Sprintf("%s-%s-r%s.apk", parsed.Pkgname, parsed.Pkgver, parsed.Pkgrel)
+	// log.Debug().Str("apkFilename", apkFilename).Msg("")
+
+	return apkFilename, nil
 }

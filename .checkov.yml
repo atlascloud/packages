@@ -4,3 +4,4 @@ skip-check:
   - CKV_OPENAPI_4
   - CKV_OPENAPI_5
   - CKV_OPENAPI_21
+  - CKV_DOCKER_2 # I run this in k8s which doesn't read Dockerfile healthchecks

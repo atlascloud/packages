@@ -2,6 +2,7 @@
 package api
 
 import (
+	// "errors"
 	"errors"
 	"net/http"
 
@@ -16,6 +17,21 @@ import (
 
 // TODO this is a transitional var, need to move everything to use pkgrepoapi.packagebasedir
 var PackageBaseDirectory string
+
+// IndexWorkers controls the number of concurrent workers for APKINDEX generation
+var IndexWorkers = 10
+
+// SetIndexWorkers sets the number of concurrent workers for APKINDEX generation
+func SetIndexWorkers(workers int) {
+	if workers < 1 {
+		workers = 1
+	}
+	if workers > 50 {
+		workers = 50
+	}
+	IndexWorkers = workers
+	log.Info().Int("workers", IndexWorkers).Msg("set APKINDEX generation workers")
+}
 
 // PkgRepoAPI - a collection packages, repos, versions, etc
 type PkgRepoAPI struct {
@@ -130,7 +146,7 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arc
 	defer func() {
 		err := src.Close()
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to close src file")
+			log.Error().Err(err).Msg("failed to close src file")
 		}
 	}()
 
@@ -156,7 +172,7 @@ func (p *PkgRepoAPI) CreatePackage(ctx echo.Context, org, distro, ver, repo, arc
 func (p *PkgRepoAPI) CreatePackageIndex(ctx echo.Context, org, distro, ver, repo, arch string) error {
 	// generateAPKIndex is meant to be run in a goroutine, so we don't actually get any return from the function
 	// for now, just blindly return true, but we should tidy this up later
-	GenerateAPKIndex(PackageBaseDirectory, org, distro, ver, repo, arch)
+	go GenerateAPKIndex(PackageBaseDirectory, org, distro, ver, repo, arch)
 
 	status := &GenerateIndex{Status: true}
 	return ctx.JSON(http.StatusOK, status)
