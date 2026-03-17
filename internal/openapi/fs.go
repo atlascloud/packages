@@ -11,12 +11,14 @@ import (
 	"mime/multipart"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
 	"gitlab.alpinelinux.org/alpine/go/repository"
+	"golang.org/x/sync/errgroup"
 )
 
 // GetValidTokens - return an array of token strings
@@ -28,7 +30,8 @@ func GetValidTokens(org string) []string {
 	tokenFS := afs.New()
 	err := tokenFS.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Msg("GetValidTokens: failed to create NewLocation")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Msg("GetValidTokens: failed to create NewLocation")
+		return tokens
 	}
 
 	tokenList, err := tokenFS.List(ctx, configURI)
@@ -65,7 +68,8 @@ func listOrgs() []Organization {
 	cfs := afs.New()
 	err := cfs.Init(ctx, configURI)
 	if err != nil {
-		log.Fatal().Err(err).Str("uri", configURI).Msg("listOrgs: failed to init afs")
+		log.Error().Err(err).Str("uri", configURI).Msg("listOrgs: failed to init afs")
+		return orgs
 	}
 
 	orgDirList, err := cfs.List(ctx, configURI)
@@ -98,7 +102,8 @@ func listRepos(org, distro, version string) ([]Repo, error) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, configURI)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("failed to list repos")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("failed to list repos")
+		return []Repo{}, err
 	}
 	result := []Repo{}
 
@@ -125,7 +130,8 @@ func listPackages(org, distro, version, repo, arch string) ([]Package, error) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, configURI)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("failed to init afs")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("failed to init afs")
+		return []Package{}, err
 	}
 	result := []Package{}
 
@@ -153,7 +159,8 @@ func getRepoInfo(org, distro, version, repo string) Repo {
 	cfs := afs.New()
 	err := cfs.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("getRepoInfo: failed to init afs")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("getRepoInfo: failed to init afs")
+		return Repo{}
 	}
 
 	ex, err := cfs.Exists(ctx, configURI)
@@ -178,7 +185,8 @@ func listVersions(org, distro string) ([]RepoVersion, error) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("listVersions: failed to init afs")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("listVersions: failed to init afs")
+		return result, err
 	}
 	vList, err := cfs.List(ctx, configURI)
 	if err != nil {
@@ -201,7 +209,8 @@ func listArches(org, distro, version, repo string) ([]Architecture, error) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("listArches: failed to init afs")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Str("distro", distro).Msg("listArches: failed to init afs")
+		return result, err
 	}
 	aList, err := cfs.List(ctx, configURI)
 	if err != nil {
@@ -225,7 +234,8 @@ func listDistros(org string) ([]Distribution, error) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Str("org", org).Str("uri", configURI).Msg("failed to list repos")
+		log.Error().Err(err).Str("org", org).Str("uri", configURI).Msg("failed to list repos")
+		return result, err
 	}
 	dList, err := cfs.List(ctx, configURI)
 	if err != nil {
@@ -249,12 +259,14 @@ func writeUploadedPkg(f *multipart.FileHeader, org, distro, version, repo, arch 
 	pkgFile, err := f.Open()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to open pkg file")
+		return
 	}
 
 	cfs := afs.New()
 	err = cfs.Init(ctx, PackageBaseDirectory)
 	if err != nil {
-		log.Fatal().Err(err).Msg("generateAPKIndex: failed to init cfs")
+		log.Error().Err(err).Msg("writeUploadedPkg: failed to init cfs")
+		return
 	}
 	outFileName := url.JoinUNC(staticURI, f.Filename)
 	_ = cfs.Delete(ctx, outFileName) // we don't care if delete fails as the file probably doesn't even exist
@@ -274,7 +286,7 @@ func writeUploadedPkg(f *multipart.FileHeader, org, distro, version, repo, arch 
 // regenerate the APKINDEX
 // TODO make sure we don't run this unnecessarily
 func GenerateAPKIndex(basedir, org, distro, version, repo, arch string) {
-	log.Debug().Msg("generating APK index")
+	log.Info().Str("org", org).Str("distro", distro).Str("version", version).Str("repo", repo).Str("arch", arch).Msg("starting APK index generation")
 	var apki repository.ApkIndex
 	apki.Description = fmt.Sprintf("%s %s %s", org, repo, version)
 
@@ -284,34 +296,77 @@ func GenerateAPKIndex(basedir, org, distro, version, repo, arch string) {
 	cfs := afs.New()
 	err := cfs.Init(ctx, basedir)
 	if err != nil {
-		log.Fatal().Err(err).Msg("generateAPKIndex: failed to init cfs")
+		log.Error().Err(err).Msg("generateAPKIndex: failed to init cfs")
+		return
 	}
 
-	walkerF := func(ctx context.Context, baseURL string, parent string, info os.FileInfo, reader io.Reader) (toContinue bool, err error) {
-		log.Trace().Str("baseurl", baseURL).Str("filename", info.Name()).Str("parent", parent).Msg("generateAPKIndex: walker")
-		if strings.HasSuffix(info.Name(), ".apk") {
-			if parent == "" {
-				// if parent is set that means we've recursed
-				pkg, err := repository.ParsePackage(reader)
-				if err != nil {
-					log.Error().Err(err).Msg("generateAPKIndex: failed to parse package")
-				}
-				// we need to rewrite the arch because noarch packages don't install right
-				pkg.Arch = arch
-				apki.Packages = append(apki.Packages, pkg)
-			}
-		}
-		return true, nil
-	}
-
-	err = cfs.Walk(ctx, staticURI, walkerF)
+	// First, collect all .apk files
+	fileList, err := cfs.List(ctx, staticURI)
 	if err != nil {
-		log.Error().Err(err).Str("URI", staticURI).Msg("failed to walk")
+		log.Error().Err(err).Str("URI", staticURI).Msg("failed to list package directory")
+		return
 	}
+
+	var apkFiles []string
+	for _, f := range fileList {
+		if !f.IsDir() && strings.HasSuffix(f.Name(), ".apk") {
+			apkFiles = append(apkFiles, f.Name())
+		}
+	}
+
+	log.Info().Int("file_count", len(apkFiles)).Msg("generateAPKIndex: found packages")
+
+	// Process packages concurrently
+	var mu sync.Mutex
+	var packageCount int
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(IndexWorkers) // Use configurable worker count
+
+	for _, filename := range apkFiles {
+		filename := filename // Capture for closure
+		g.Go(func() error {
+			fileURL := url.JoinUNC(staticURI, filename)
+
+			// Open and read the file
+			data, err := cfs.DownloadWithURL(gctx, fileURL)
+			if err != nil {
+				log.Error().Err(err).Str("filename", filename).Msg("generateAPKIndex: failed to read package")
+				return nil
+			}
+
+			// Parse the package
+			pkg, err := repository.ParsePackage(bytes.NewReader(data))
+			if err != nil {
+				log.Error().Err(err).Str("filename", filename).Msg("generateAPKIndex: failed to parse package")
+				return nil // Don't fail entire index generation
+			}
+			// we need to rewrite the arch because noarch packages don't install right
+			pkg.Arch = arch
+
+			mu.Lock()
+			apki.Packages = append(apki.Packages, pkg)
+			packageCount++
+			// Log progress every 100 packages
+			if packageCount%100 == 0 {
+				log.Info().Int("count", packageCount).Msg("generateAPKIndex: progress")
+			}
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	// Wait for all concurrent package processing to complete
+	if err := g.Wait(); err != nil {
+		log.Error().Err(err).Msg("generateAPKIndex: error during concurrent package processing")
+		return
+	}
+
+	log.Info().Int("total_packages", packageCount).Msg("generateAPKIndex: finished parsing packages")
 
 	distroDirContents, err := cfs.List(ctx, configURI)
 	if err != nil {
 		log.Error().Err(err).Str("uri", configURI).Msg("failed to list rsa key")
+		return
 	}
 
 	// the afs matcher thing doesn't seem to work, so we have to find it the hard way
@@ -322,34 +377,49 @@ func GenerateAPKIndex(basedir, org, distro, version, repo, arch string) {
 			keyFd, err = cfs.Open(ctx, f)
 			if err != nil {
 				log.Error().Err(err).Str("uri", configURI).Msg("failed to open rsa key")
+				return
 			}
 			keyName = f.Name()
 		}
 	}
 
+	if keyFd == nil {
+		log.Error().Str("uri", configURI).Msg("generateAPKIndex: no RSA key found")
+		return
+	}
+
 	keyData, err := io.ReadAll(keyFd)
 	if err != nil {
 		log.Error().Err(err).Str("uri", configURI).Msg("failed to read rsa key")
+		return
 	}
 
 	der, _ := pem.Decode(keyData)
+	if der == nil {
+		log.Error().Str("uri", configURI).Msg("generateAPKIndex: failed to decode PEM")
+		return
+	}
 
 	key, err := x509.ParsePKCS1PrivateKey(der.Bytes)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse key from der")
+		return
 	}
 
 	archive, err := repository.ArchiveFromIndex(&apki)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate archive from index")
+		return
 	}
 	signedarchive, err := repository.SignArchive(archive, key, keyName+".pub")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to sign archive")
+		return
 	}
 	sabytes, err := io.ReadAll(signedarchive)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read signed archive bytes")
+		return
 	}
 
 	outFilePath := url.JoinUNC(staticURI, "APKINDEX.tar.gz")
@@ -357,10 +427,12 @@ func GenerateAPKIndex(basedir, org, distro, version, repo, arch string) {
 	outFile, err := cfs.NewWriter(ctx, outFilePath, 0644)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create outfile")
+		return
 	}
 	c, err := outFile.Write(sabytes)
 	if err != nil || c == 0 {
 		log.Error().Err(err).Int("count", c).Msg("failed to write signed archive")
+		return
 	}
-	log.Trace().Msg("finished generating apk index")
+	log.Info().Str("org", org).Str("distro", distro).Str("version", version).Str("repo", repo).Str("arch", arch).Msg("finished generating apk index")
 }

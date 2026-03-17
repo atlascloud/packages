@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,8 +23,16 @@ import (
 func main() {
 	var port = flag.Int("port", 8888, "Port for HTTP server")
 	var dir = flag.String("dir", "/srv/packages", "Root directory for packages/config")
+	var indexWorkers = flag.Int("index-workers", 10, "Number of concurrent workers for APKINDEX generation")
 
 	flag.Parse()
+
+	// Allow override via environment variable
+	if envWorkers := os.Getenv("APKINDEX_WORKERS"); envWorkers != "" {
+		if workers, err := strconv.Atoi(envWorkers); err == nil {
+			indexWorkers = &workers
+		}
+	}
 
 	swagger, err := repoApi.GetSwagger()
 	if err != nil {
@@ -37,6 +46,7 @@ func main() {
 
 	// Create an instance of our handler which satisfies the generated interface
 	papi := repoApi.NewPkgRepo(*dir)
+	repoApi.SetIndexWorkers(*indexWorkers)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
@@ -45,8 +55,12 @@ func main() {
 	p := prometheus.NewPrometheus("packages", nil)
 	p.Use(e)
 
-	// Log all requests
-	e.Use(middleware.Logger())
+	// Log all requests, but skip k8s healthchecks
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().Header.Get("User-Agent"), "kube-probe")
+		},
+	}))
 
 	// secure middleware
 	e.Use(middleware.Secure())

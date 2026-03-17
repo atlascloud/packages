@@ -2,9 +2,10 @@ FROM golang:alpine
 
 RUN apk add --no-cache git gcc musl-dev abuild
 
-RUN go get github.com/githubnemo/CompileDaemon
+#checkov:skip=CKV_DOCKER_3: this is a local dev file
+# USER 1000:1000
 
-USER 1000:1000
+RUN go install github.com/githubnemo/CompileDaemon@latest
 
 WORKDIR /app
 COPY . .
@@ -15,7 +16,7 @@ HEALTHCHECK --interval=5m --timeout=10s \
     CMD curl -fs localhost:8888/health/ready
 
 ENTRYPOINT CompileDaemon \
-    -build="go build ./cmd/api" \
+    -build="go build -buildvcs=false ./cmd/api" \
     -color=true \
     -graceful-kill=true \
     -log-prefix=false \

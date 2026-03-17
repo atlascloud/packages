@@ -1,0 +1,12 @@
+# Pass --offline to lychee so it only checks local file links
+# and skips all external HTTP/HTTPS URL requests
+SPELL_LYCHEE_ARGUMENTS: "--offline"
+
+COPYPASTE_JSCPD_ARGUMENTS: "--threshold 9"
+
+# don't even bother running these they are useless
+DISABLE_LINTERS:
+  - SPELL_CSPELL
+
+REPOSITORY_TRIVY_ARGUMENTS: "--ignorefile .trivyignore.yaml"
+REPOSITORY_TRIVY_SBOM_ARGUMENTS: "--ignorefile .trivyignore.yaml"
