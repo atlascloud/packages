@@ -16,6 +16,7 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	echomiddleware "github.com/oapi-codegen/echo-middleware"
 	"golang.org/x/net/http2"
 )
@@ -59,6 +60,30 @@ func main() {
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		Skipper: func(c echo.Context) bool {
 			return strings.Contains(c.Request().Header.Get("User-Agent"), "kube-probe")
+		},
+		LogMethod:  true,
+		LogURI:     true,
+		LogStatus:  true,
+		LogLatency: true,
+		LogError:   true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error != nil {
+				e.Logger.Errorj(log.JSON{
+					"method":  v.Method,
+					"uri":     v.URI,
+					"status":  v.Status,
+					"latency": v.Latency.String(),
+					"error":   v.Error.Error(),
+				})
+			} else {
+				e.Logger.Infoj(log.JSON{
+					"method":  v.Method,
+					"uri":     v.URI,
+					"status":  v.Status,
+					"latency": v.Latency.String(),
+				})
+			}
+			return nil
 		},
 	}))
 
