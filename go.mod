@@ -19,7 +19,7 @@ require (
 	github.com/viant/afs v1.30.0
 	gitlab.alpinelinux.org/alpine/go v0.10.1
 	golang.org/x/net v0.53.0
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.21.0
 )
 
 require (
