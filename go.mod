@@ -1,6 +1,6 @@
 module github.com/atlascloud/packages
 
-go 1.25.0
+go 1.26.0
 
 // replace gitlab.alpinelinux.org/alpine/go => /home/iggy/projects/gitlab.alpinelinux.org/iggy/go
 // replace gitlab.alpinelinux.org/alpine/go => gitlab.alpinelinux.org/abemedia/go v0.8.1-0.20231202003941-ea851dc19408
@@ -19,7 +19,7 @@ require (
 	github.com/viant/afs v1.30.0
 	gitlab.alpinelinux.org/alpine/go v0.10.1
 	golang.org/x/net v0.57.0
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require (
